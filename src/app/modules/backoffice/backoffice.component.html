@@ -1,0 +1,197 @@
+<div class="backoffice animate-in">
+  <div class="page-header">
+    <div>
+      <h1 class="text-headline-xl">Backoffice</h1>
+      <p class="text-body-sm text-muted">Gestão administrativa do ecossistema Ntangu.</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid animate-in-1">
+    <div class="stat-card glass-card glass-card-hover" *ngFor="let s of stats">
+      <span class="material-symbols-outlined stat-icon text-primary">{{ s.icon }}</span>
+      <p class="text-label text-muted">{{ s.label }}</p>
+      <h3 class="text-headline-xl">{{ s.value }}</h3>
+      <p class="stat-delta" [class.positive]="s.deltaPositive">{{ s.delta }}</p>
+    </div>
+  </div>
+
+  <!-- Users Table + Alerts -->
+  <div class="main-grid animate-in-2">
+    <!-- Users -->
+    <div class="glass-card users-card">
+      <div class="card-header">
+        <h4 class="text-headline-md">Gerenciar Usuários</h4>
+        <button class="btn-primary" (click)="showUserModal = true">
+          <span class="material-symbols-outlined" style="font-size:18px">add</span> Novo Usuário
+        </button>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Status</th>
+              <th>Plano</th>
+              <th>Papel</th>
+              <th style="text-align:right">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>
+                <div class="user-row">
+                  <div class="user-avatar-sm">{{ user.name[0] }}</div>
+                  <div>
+                    <p style="font-weight:600">{{ user.name }}</p>
+                    <p class="text-body-sm text-muted">{{ user.email }}</p>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge" [class.badge-active]="user.status === 'active'" [class.badge-inactive]="user.status === 'inactive'">{{ user.status === 'active' ? 'Ativo' : 'Inativo' }}</span></td>
+              <td><span class="badge" [class]="'badge-' + user.plan">{{ user.plan }}</span></td>
+              <td><span class="text-label" [style.color]="user.role === 'admin' ? 'var(--tertiary)' : 'var(--on-surface-variant)'">{{ user.role }}</span></td>
+              <td style="text-align:right">
+                <div class="action-buttons">
+                  <button class="btn-icon" style="width:32px;height:32px" title="Editar">
+                    <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                  </button>
+                  <button class="btn-icon" style="width:32px;height:32px;color:var(--error)" title="Remover" (click)="deleteUser(user.id)">
+                    <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <p class="text-body-sm text-muted">Mostrando {{ users.length }} de 12,482 usuários</p>
+        <div class="pagination">
+          <button class="btn-icon" style="width:34px;height:34px"><span class="material-symbols-outlined" style="font-size:18px">chevron_left</span></button>
+          <button class="btn-icon" style="width:34px;height:34px"><span class="material-symbols-outlined" style="font-size:18px">chevron_right</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <div class="glass-card alerts-card">
+      <h4 class="text-headline-md" style="margin-bottom:16px">Alertas Recentes</h4>
+      <div class="alert-list">
+        <div class="alert-item" *ngFor="let alert of alerts"
+          [class.alert-critical]="alert.type === 'critical'"
+          [class.alert-warning]="alert.type === 'warning'"
+          [class.alert-info]="alert.type === 'info'">
+          <span class="material-symbols-outlined alert-icon">
+            {{ alert.type === 'critical' ? 'warning' : alert.type === 'warning' ? 'info' : 'circle_notifications' }}
+          </span>
+          <div>
+            <p class="text-label">{{ alert.title }}</p>
+            <p class="text-body-sm">{{ alert.message }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cities Grid -->
+  <div class="glass-card cities-section animate-in-3">
+    <div class="card-header">
+      <div>
+        <h4 class="text-headline-md">Cidades Monitoradas</h4>
+        <p class="text-body-sm text-muted">Gestão de thresholds e notificações por localidade.</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-glass" (click)="showCityModal = true">
+          <span class="material-symbols-outlined">add_location</span> Nova Cidade
+        </button>
+        <button class="btn-glass">
+          <span class="material-symbols-outlined">download</span>
+        </button>
+      </div>
+    </div>
+    <div class="cities-grid">
+      <div class="city-cell" *ngFor="let city of cities">
+        <div class="city-top">
+          <h5 class="text-body-lg" style="font-weight:600">{{ city.name }}</h5>
+          <button class="btn-icon" style="width:28px;height:28px;color:var(--error)" (click)="deleteCity(city.id)">
+            <span class="material-symbols-outlined" style="font-size:16px">close</span>
+          </button>
+        </div>
+        <p class="text-body-sm text-muted" style="margin-bottom:12px">{{ city.country }}</p>
+        <div class="city-badges">
+          <span class="badge" [class]="'badge-' + city.plan">{{ city.plan }}</span>
+          <span class="badge" [class]="'badge-' + city.status">{{ city.status }}</span>
+        </div>
+        <p class="text-label text-muted" style="margin-top:10px">{{ city.sensors }} sensores</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" *ngIf="showUserModal" (click)="showUserModal = false">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <h3 class="text-headline-md" style="margin-bottom:20px">Novo Usuário</h3>
+    <div class="modal-form">
+      <div class="field-group">
+        <label class="text-label text-muted">Nome</label>
+        <input class="input-glass" type="text" [(ngModel)]="newUser.name" placeholder="Nome completo"/>
+      </div>
+      <div class="field-group">
+        <label class="text-label text-muted">E-mail</label>
+        <input class="input-glass" type="email" [(ngModel)]="newUser.email" placeholder="email@exemplo.com"/>
+      </div>
+      <div class="field-group">
+        <label class="text-label text-muted">Papel</label>
+        <select class="input-glass" [(ngModel)]="newUser.role">
+          <option value="user">Usuário</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label class="text-label text-muted">Plano</label>
+        <select class="input-glass" [(ngModel)]="newUser.plan">
+          <option value="free">Free</option>
+          <option value="premium">Premium</option>
+          <option value="pro">Pro</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-glass" (click)="showUserModal = false">Cancelar</button>
+      <button class="btn-primary" (click)="addUser()">Criar Usuário</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add City Modal -->
+<div class="modal-overlay" *ngIf="showCityModal" (click)="showCityModal = false">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <h3 class="text-headline-md" style="margin-bottom:20px">Nova Cidade</h3>
+    <div class="modal-form">
+      <div class="field-group">
+        <label class="text-label text-muted">Nome da Cidade</label>
+        <input class="input-glass" type="text" [(ngModel)]="newCity.name" placeholder="Ex: Benguela"/>
+      </div>
+      <div class="field-group">
+        <label class="text-label text-muted">País</label>
+        <input class="input-glass" type="text" [(ngModel)]="newCity.country" placeholder="Ex: Angola"/>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="field-group">
+          <label class="text-label text-muted">Latitude</label>
+          <input class="input-glass" type="number" [(ngModel)]="newCity.lat" placeholder="-12.578"/>
+        </div>
+        <div class="field-group">
+          <label class="text-label text-muted">Longitude</label>
+          <input class="input-glass" type="number" [(ngModel)]="newCity.lon" placeholder="13.41"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-glass" (click)="showCityModal = false">Cancelar</button>
+      <button class="btn-primary" (click)="addCity()">Adicionar Cidade</button>
+    </div>
+  </div>
+</div>

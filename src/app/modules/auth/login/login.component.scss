@@ -1,0 +1,220 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+}
+
+.auth-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bg-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.5;
+}
+.blob-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(190,197,228,0.15), transparent);
+  top: -150px; left: -150px;
+}
+.blob-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(185,195,255,0.1), transparent);
+  bottom: -100px; right: -100px;
+}
+.bg-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.auth-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.auth-brand {
+  .brand-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 100px;
+    padding: 8px 18px;
+  }
+}
+
+.auth-card {
+  width: 100%;
+  padding: 36px;
+
+  @media (max-width: 480px) { padding: 24px; }
+}
+
+.auth-header {
+  margin-bottom: 28px;
+  h1 { margin-bottom: 6px; }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,180,171,0.12);
+  border: 1px solid rgba(255,180,171,0.3);
+  color: var(--error);
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 13px;
+  margin-bottom: 20px;
+  .material-symbols-outlined { font-size: 18px; flex-shrink: 0; }
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forgot-link {
+  font-size: 12px;
+  color: var(--primary);
+  text-decoration: none;
+  &:hover { text-decoration: underline; }
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    font-size: 20px;
+    color: var(--on-surface-variant);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .input-glass {
+    padding-left: 46px;
+    padding-right: 46px;
+  }
+}
+
+.eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  transition: color 0.2s;
+  &:hover { color: var(--primary); }
+  .material-symbols-outlined { font-size: 20px; }
+}
+
+.login-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 14px;
+  font-size: 14px;
+  margin-top: 4px;
+  border-radius: 14px;
+
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.divider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--glass-border);
+}
+
+.social-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.social-btn {
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 16px;
+  a { text-decoration: none; font-weight: 700; &:hover { text-decoration: underline; } }
+}
+
+.auth-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Register-specific */
+.strength-bars {
+  display: flex; gap: 4px; margin-top: 6px;
+}
+.strength-bar {
+  height: 4px; flex: 1; border-radius: 4px; transition: background 0.3s;
+}
+.terms-row {
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+  input[type="checkbox"] {
+    margin-top: 2px; accent-color: var(--primary); flex-shrink: 0;
+    width: 16px; height: 16px;
+  }
+  a { text-decoration: none; &:hover { text-decoration: underline; } }
+}

@@ -1,0 +1,134 @@
+<div class="settings animate-in">
+  <div class="page-header">
+    <h1 class="text-headline-xl">Definições</h1>
+    <p class="text-body-sm text-muted">Gerencie as suas preferências do Ntangu.</p>
+  </div>
+
+  <div class="settings-grid">
+    <!-- Profile -->
+    <div class="glass-card settings-card animate-in-1">
+      <h3 class="text-headline-md card-title">
+        <span class="material-symbols-outlined text-primary">account_circle</span> Perfil
+      </h3>
+      <div class="profile-block">
+        <div class="profile-avatar">
+          <span class="material-symbols-outlined icon-fill" style="font-size:48px;color:var(--primary)">account_circle</span>
+        </div>
+        <div>
+          <p class="text-headline-md">{{ auth.currentUser?.name }}</p>
+          <p class="text-body-sm text-muted">{{ auth.currentUser?.email }}</p>
+          <span class="badge" [class]="auth.isAdmin() ? 'badge-warning' : 'badge-stable'" style="margin-top:8px">
+            {{ auth.currentUser?.role }}
+          </span>
+        </div>
+      </div>
+      <div class="field-group" style="margin-top:20px">
+        <label class="text-label text-muted">Nome</label>
+        <input class="input-glass" type="text" [value]="auth.currentUser?.name" readonly/>
+      </div>
+      <div class="field-group" style="margin-top:12px">
+        <label class="text-label text-muted">E-mail</label>
+        <input class="input-glass" type="email" [value]="auth.currentUser?.email" readonly/>
+      </div>
+    </div>
+
+    <!-- Appearance -->
+    <div class="glass-card settings-card animate-in-2">
+      <h3 class="text-headline-md card-title">
+        <span class="material-symbols-outlined text-primary">palette</span> Aparência
+      </h3>
+
+      <div class="setting-row">
+        <div>
+          <p class="text-body-sm" style="font-weight:600">Modo Escuro</p>
+          <p class="text-label text-muted">Interface escura para uso noturno</p>
+        </div>
+        <div class="toggle-switch" [class.on]="theme.isDark" (click)="theme.toggleTheme()">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="setting-row">
+        <div>
+          <p class="text-body-sm" style="font-weight:600">Idioma</p>
+          <p class="text-label text-muted">Português ou Inglês</p>
+        </div>
+        <button class="btn-glass" (click)="i18n.toggleLang()">
+          {{ i18n.currentLang === 'pt' ? '🇵🇹 Português' : '🇬🇧 English' }}
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="setting-row">
+        <div>
+          <p class="text-body-sm" style="font-weight:600">Unidades de Temperatura</p>
+          <p class="text-label text-muted">Celsius ou Fahrenheit</p>
+        </div>
+        <div class="unit-toggle">
+          <button [class.active]="units === 'celsius'" (click)="units = 'celsius'">°C</button>
+          <button [class.active]="units === 'fahrenheit'" (click)="units = 'fahrenheit'">°F</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="glass-card settings-card animate-in-3">
+      <h3 class="text-headline-md card-title">
+        <span class="material-symbols-outlined text-primary">notifications</span> Notificações
+      </h3>
+
+      <div class="setting-row">
+        <div>
+          <p class="text-body-sm" style="font-weight:600">Alertas por E-mail</p>
+          <p class="text-label text-muted">Receba alertas meteorológicos</p>
+        </div>
+        <div class="toggle-switch" [class.on]="notifications.email" (click)="notifications.email = !notifications.email">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="setting-row">
+        <div>
+          <p class="text-body-sm" style="font-weight:600">Notificações Push</p>
+          <p class="text-label text-muted">Notificações no browser</p>
+        </div>
+        <div class="toggle-switch" [class.on]="notifications.push" (click)="notifications.push = !notifications.push">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="setting-row">
+        <div>
+          <p class="text-body-sm" style="font-weight:600">Alertas Críticos</p>
+          <p class="text-label text-muted">Tempestades e eventos severos</p>
+        </div>
+        <div class="toggle-switch" [class.on]="notifications.alerts" (click)="notifications.alerts = !notifications.alerts">
+          <div class="toggle-thumb"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pro Plan -->
+    <div class="glass-card settings-card pro-card animate-in-3">
+      <div class="pro-header">
+        <span class="material-symbols-outlined icon-fill text-tertiary" style="font-size:32px">star</span>
+        <div>
+          <h3 class="text-headline-md">Upgrade para Pro</h3>
+          <p class="text-body-sm text-muted">Acesso ilimitado a todas as funcionalidades</p>
+        </div>
+      </div>
+      <div class="pro-features">
+        <div class="pro-feature" *ngFor="let f of ['Radar em tempo real','Previsão 14 dias','Exportação ilimitada','API Access','Suporte prioritário']">
+          <span class="material-symbols-outlined text-tertiary" style="font-size:18px">check_circle</span>
+          <span class="text-body-sm">{{ f }}</span>
+        </div>
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:14px;margin-top:20px">
+        Assinar Pro — €9,99/mês
+      </button>
+    </div>
+  </div>
+</div>

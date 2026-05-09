@@ -1,0 +1,180 @@
+<div class="map-page animate-in">
+  <div class="map-header">
+    <div>
+      <h1 class="text-headline-xl">Mapa Interativo</h1>
+      <p class="text-body-sm text-muted">Visualize dados atmosféricos em tempo real</p>
+    </div>
+  </div>
+
+  <div class="map-layout">
+    <!-- Map Canvas -->
+    <div class="map-canvas glass-card">
+      <!-- SVG Map -->
+      <svg class="map-svg" viewBox="0 0 900 500" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="mapgrid" width="50" height="50" patternUnits="userSpaceOnUse">
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="rgba(190,197,228,0.06)" stroke-width="1"/>
+          </pattern>
+          <radialGradient id="heatspot1" cx="45%" cy="55%" r="15%">
+            <stop offset="0%" style="stop-color:rgba(237,194,37,0.25)"/>
+            <stop offset="100%" style="stop-color:transparent"/>
+          </radialGradient>
+          <radialGradient id="heatspot2" cx="70%" cy="35%" r="12%">
+            <stop offset="0%" style="stop-color:rgba(185,195,255,0.2)"/>
+            <stop offset="100%" style="stop-color:transparent"/>
+          </radialGradient>
+        </defs>
+
+        <rect width="900" height="500" fill="rgba(10,18,41,0.95)"/>
+        <rect width="900" height="500" fill="url(#mapgrid)"/>
+        <rect width="900" height="500" fill="url(#heatspot1)"/>
+        <rect width="900" height="500" fill="url(#heatspot2)"/>
+
+        <!-- Animated wind streamlines -->
+        <path d="M0,200 Q225,140 450,200 T900,200" stroke="rgba(185,195,255,0.5)" stroke-width="2" fill="none">
+          <animate attributeName="d" dur="9s" repeatCount="indefinite"
+            values="M0,200 Q225,140 450,200 T900,200;M0,225 Q225,165 450,225 T900,225;M0,200 Q225,140 450,200 T900,200"/>
+        </path>
+        <path d="M0,120 Q300,70 600,120 T900,120" stroke="rgba(190,197,228,0.3)" stroke-width="1.5" fill="none">
+          <animate attributeName="d" dur="14s" repeatCount="indefinite"
+            values="M0,120 Q300,70 600,120 T900,120;M0,150 Q300,100 600,150 T900,150;M0,120 Q300,70 600,120 T900,120"/>
+        </path>
+        <path d="M0,330 Q200,280 500,330 T900,330" stroke="rgba(237,194,37,0.2)" stroke-width="1.5" fill="none">
+          <animate attributeName="d" dur="11s" repeatCount="indefinite"
+            values="M0,330 Q200,280 500,330 T900,330;M0,310 Q200,260 500,310 T900,310;M0,330 Q200,280 500,330 T900,330"/>
+        </path>
+        <path d="M100,400 Q350,370 700,400 T900,400" stroke="rgba(190,197,228,0.15)" stroke-width="1" fill="none">
+          <animate attributeName="d" dur="7s" repeatCount="indefinite"
+            values="M100,400 Q350,370 700,400 T900,400;M100,420 Q350,390 700,420 T900,420;M100,400 Q350,370 700,400 T900,400"/>
+        </path>
+
+        <!-- City markers -->
+        <g class="marker" transform="translate(405,255)">
+          <circle r="12" fill="rgba(190,197,228,0.15)" stroke="var(--primary)" stroke-width="1.5">
+            <animate attributeName="r" dur="2.5s" repeatCount="indefinite" values="12;18;12"/>
+            <animate attributeName="opacity" dur="2.5s" repeatCount="indefinite" values="1;0.3;1"/>
+          </circle>
+          <circle r="5" fill="var(--primary)"/>
+          <text x="14" y="-14" fill="var(--on-surface)" font-size="11" font-family="Space Grotesk" font-weight="600">Luanda 28°</text>
+        </g>
+        <g transform="translate(270,185)">
+          <circle r="8" fill="rgba(185,195,255,0.2)" stroke="var(--secondary)" stroke-width="1.5"/>
+          <circle r="4" fill="var(--secondary)"/>
+          <text x="12" y="-10" fill="var(--on-surface)" font-size="10" font-family="Space Grotesk" font-weight="600">Lisboa 19°</text>
+        </g>
+        <g transform="translate(650,320)">
+          <circle r="8" fill="rgba(237,194,37,0.2)" stroke="var(--tertiary)" stroke-width="1.5"/>
+          <circle r="4" fill="var(--tertiary)"/>
+          <text x="12" y="-10" fill="var(--on-surface)" font-size="10" font-family="Space Grotesk" font-weight="600">São Paulo 29°</text>
+        </g>
+        <g transform="translate(680,150)">
+          <circle r="6" fill="rgba(190,197,228,0.15)" stroke="var(--primary)" stroke-width="1"/>
+          <circle r="3" fill="var(--primary)"/>
+          <text x="10" y="-8" fill="var(--on-surface)" font-size="10" font-family="Space Grotesk">Porto 16°</text>
+        </g>
+      </svg>
+
+      <!-- Overlay controls -->
+      <div class="map-controls">
+        <button class="btn-icon"><span class="material-symbols-outlined">add</span></button>
+        <button class="btn-icon"><span class="material-symbols-outlined">remove</span></button>
+        <div style="height:8px"></div>
+        <button class="btn-icon"><span class="material-symbols-outlined">explore</span></button>
+        <button class="btn-icon"><span class="material-symbols-outlined">layers</span></button>
+      </div>
+
+      <!-- Live badge -->
+      <div class="live-badge">
+        <div class="live-dot animate-pulse"></div>
+        <span class="text-label">Live · Radar de Vento</span>
+      </div>
+
+      <!-- Location info -->
+      <div class="location-badge">
+        <span class="material-symbols-outlined text-primary" style="font-size:18px">location_on</span>
+        <div>
+          <p class="text-label text-muted">Visualizando</p>
+          <p class="text-body-sm" style="font-weight:600">Atlântico Sul</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar panel -->
+    <div class="map-sidebar">
+      <!-- Layer control -->
+      <div class="layers-panel glass-card">
+        <div class="panel-header">
+          <h3 class="text-headline-md">Camadas</h3>
+          <span class="material-symbols-outlined text-primary">layers</span>
+        </div>
+        <div class="layer-list">
+          <div class="layer-item" *ngFor="let layer of layers" (click)="toggleLayer(layer)">
+            <div class="layer-info">
+              <span class="material-symbols-outlined" [style.color]="layer.active ? layer.color : 'var(--outline)'">{{ layer.icon }}</span>
+              <span class="text-body-sm" [style.color]="layer.active ? 'var(--on-surface)' : 'var(--on-surface-variant)'">{{ layer.label }}</span>
+            </div>
+            <div class="toggle-switch" [class.on]="layer.active">
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+        </div>
+        <div class="precision-control">
+          <p class="text-label text-muted">Precisão Visual</p>
+          <div class="precision-labels">
+            <span class="text-label text-muted">Baixa</span>
+            <span class="text-label text-muted">Ultra HD</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width]="precision + '%'"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time stats -->
+      <div class="stats-panel glass-card">
+        <h3 class="text-headline-md" style="margin-bottom:14px">Dados Atuais</h3>
+        <div class="stat-row">
+          <span class="text-body-sm text-muted">Velocidade Média</span>
+          <span class="text-data text-primary">14 km/h</span>
+        </div>
+        <div class="divider"></div>
+        <div class="stat-row">
+          <span class="text-body-sm text-muted">Pressão</span>
+          <span class="text-data">1013 hPa</span>
+        </div>
+        <div class="divider"></div>
+        <div class="stat-row">
+          <span class="text-body-sm text-muted">Temperatura</span>
+          <span class="text-data text-tertiary">28°C</span>
+        </div>
+        <div class="divider"></div>
+        <div class="stat-row">
+          <span class="text-body-sm text-muted">Humidade</span>
+          <span class="text-data text-secondary">74%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline-bar glass-card animate-in-2">
+    <button class="btn-primary" style="padding:10px;border-radius:50%;width:44px;height:44px;justify-content:center;flex-shrink:0">
+      <span class="material-symbols-outlined" style="font-size:20px">play_arrow</span>
+    </button>
+    <div class="timeline-track">
+      <div class="track-bg"></div>
+      <div class="track-fill" style="width:40%"></div>
+      <div class="track-thumb" style="left:40%"></div>
+      <div class="time-labels">
+        <span class="text-label text-muted" *ngFor="let t of times" [class.active]="t === selectedTime" (click)="selectedTime = t">{{ t }}</span>
+      </div>
+    </div>
+    <div class="timeline-date">
+      <div>
+        <p class="text-label text-primary">TERÇA-FEIRA</p>
+        <p class="text-headline-md">{{ selectedTime }}</p>
+      </div>
+      <span class="material-symbols-outlined text-muted">calendar_today</span>
+    </div>
+  </div>
+</div>

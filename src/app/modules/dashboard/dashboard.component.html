@@ -1,0 +1,218 @@
+<div class="dashboard animate-in" *ngIf="!loading; else loadingTpl">
+
+  <!-- Hero Row: Current Weather + Map -->
+  <div class="hero-grid">
+
+    <!-- Current Weather Card -->
+    <div class="weather-hero glass-card animate-in-1">
+      <div class="weather-top">
+        <div>
+          <h1 class="city-name">{{ weather.city }}</h1>
+          <p class="city-sub text-muted">{{ weather.country }} · {{ weather.timestamp | date:'EEEE, d MMMM' }}</p>
+        </div>
+        <span class="material-symbols-outlined icon-fill weather-icon">{{ weather.conditionIcon }}</span>
+      </div>
+
+      <div class="temp-display">
+        <span class="temp-number">{{ weather.temperature }}°</span>
+        <div class="temp-meta">
+          <p class="condition-label text-primary">{{ weather.condition }}</p>
+          <p class="feels-like text-muted">Sensação {{ weather.feelsLike }}°</p>
+        </div>
+      </div>
+
+      <div class="weather-divider"></div>
+
+      <div class="hi-lo">
+        <div>
+          <span class="text-label text-muted">Mín</span>
+          <span class="text-data text-primary">{{ weather.low }}°</span>
+        </div>
+        <div>
+          <span class="text-label text-muted">Máx</span>
+          <span class="text-data text-primary">{{ weather.high }}°</span>
+        </div>
+      </div>
+
+      <!-- Background decoration -->
+      <div class="weather-bg-blob"></div>
+    </div>
+
+    <!-- Map Preview -->
+    <div class="map-preview glass-card animate-in-2">
+      <div class="map-placeholder">
+        <div class="map-overlay-ui">
+          <div class="map-top-controls">
+            <button class="btn-icon"><span class="material-symbols-outlined">add</span></button>
+            <button class="btn-icon"><span class="material-symbols-outlined">remove</span></button>
+            <button class="btn-icon" style="margin-top:8px"><span class="material-symbols-outlined">layers</span></button>
+          </div>
+          <div class="map-live-badge">
+            <div class="live-dot animate-pulse"></div>
+            <span class="text-label">Live · Radar de Vento</span>
+          </div>
+        </div>
+        <div class="map-svg-container">
+          <svg viewBox="0 0 600 350" xmlns="http://www.w3.org/2000/svg" class="map-svg">
+            <!-- Grid -->
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(190,197,228,0.1)" stroke-width="1"/>
+              </pattern>
+              <radialGradient id="glow1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" style="stop-color:rgba(190,197,228,0.3);stop-opacity:1"/>
+                <stop offset="100%" style="stop-color:rgba(190,197,228,0);stop-opacity:0"/>
+              </radialGradient>
+            </defs>
+            <rect width="600" height="350" fill="rgba(11,15,16,0.8)"/>
+            <rect width="600" height="350" fill="url(#grid)"/>
+            <!-- Simulated wind paths -->
+            <path d="M0,175 Q150,120 300,175 T600,175" stroke="rgba(185,195,255,0.4)" stroke-width="2" fill="none">
+              <animate attributeName="d" dur="8s" repeatCount="indefinite"
+                values="M0,175 Q150,120 300,175 T600,175;M0,195 Q150,145 300,195 T600,195;M0,175 Q150,120 300,175 T600,175"/>
+            </path>
+            <path d="M0,100 Q200,60 400,100 T800,100" stroke="rgba(190,197,228,0.25)" stroke-width="1.5" fill="none">
+              <animate attributeName="d" dur="12s" repeatCount="indefinite"
+                values="M0,100 Q200,60 400,100 T800,100;M0,130 Q200,90 400,130 T800,130;M0,100 Q200,60 400,100 T800,100"/>
+            </path>
+            <path d="M0,260 Q200,220 400,260 T800,260" stroke="rgba(237,194,37,0.15)" stroke-width="1.5" fill="none">
+              <animate attributeName="d" dur="10s" repeatCount="indefinite"
+                values="M0,260 Q200,220 400,260 T800,260;M0,240 Q200,200 400,240 T800,240;M0,260 Q200,220 400,260 T800,260"/>
+            </path>
+            <!-- City markers -->
+            <circle cx="300" cy="175" r="8" fill="var(--primary)" opacity="0.9">
+              <animate attributeName="r" dur="2s" repeatCount="indefinite" values="8;12;8"/>
+              <animate attributeName="opacity" dur="2s" repeatCount="indefinite" values="0.9;0.4;0.9"/>
+            </circle>
+            <circle cx="300" cy="175" r="4" fill="var(--primary)"/>
+            <circle cx="180" cy="120" r="5" fill="var(--secondary)" opacity="0.7"/>
+            <circle cx="420" cy="220" r="5" fill="var(--tertiary)" opacity="0.7"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Metrics Grid -->
+  <div class="metrics-grid animate-in-2">
+
+    <div class="metric-card glass-card glass-card-hover">
+      <div class="metric-header">
+        <span class="material-symbols-outlined text-primary">humidity_percentage</span>
+        <span class="text-label text-muted">Humidade</span>
+      </div>
+      <div class="metric-value">{{ weather.humidity }}<span class="metric-unit">%</span></div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width]="weather.humidity + '%'"></div>
+      </div>
+      <p class="metric-note text-muted">Ponto de orvalho {{ weather.temperature - 8 }}°</p>
+    </div>
+
+    <div class="metric-card glass-card glass-card-hover">
+      <div class="metric-header">
+        <span class="material-symbols-outlined text-primary">air</span>
+        <span class="text-label text-muted">Vento</span>
+      </div>
+      <div class="metric-value">{{ weather.windSpeed }}<span class="metric-unit">km/h</span></div>
+      <div class="metric-icon-row">
+        <span class="material-symbols-outlined text-muted" style="font-size:18px;transform:rotate(45deg)">navigation</span>
+        <span class="text-body-sm text-muted">{{ weather.windDirection }}</span>
+      </div>
+    </div>
+
+    <div class="metric-card glass-card glass-card-hover">
+      <div class="metric-header">
+        <span class="material-symbols-outlined text-tertiary">wb_sunny</span>
+        <span class="text-label text-muted">Índice UV</span>
+      </div>
+      <div class="metric-value" [style.color]="getMetricColor(weather.uvIndex, 'uv')">{{ weather.uvIndex }}<span class="metric-unit">/11</span></div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width]="getUvWidth(weather.uvIndex)" [style.background]="getMetricColor(weather.uvIndex, 'uv')"></div>
+      </div>
+      <p class="metric-note text-muted">{{ getUvLabel(weather.uvIndex) }}</p>
+    </div>
+
+    <div class="metric-card glass-card glass-card-hover">
+      <div class="metric-header">
+        <span class="material-symbols-outlined text-secondary">eco</span>
+        <span class="text-label text-muted">Qualidade do Ar</span>
+      </div>
+      <div class="metric-value text-secondary">{{ weather.aqi }}<span class="metric-unit">AQI</span></div>
+      <span class="badge badge-stable" style="margin-top:8px">{{ weather.aqiLabel }}</span>
+    </div>
+
+  </div>
+
+  <!-- Forecast Row -->
+  <div class="forecast-grid animate-in-3">
+
+    <!-- Hourly Forecast -->
+    <div class="glass-card hourly-card">
+      <h3 class="text-headline-md card-title">Previsão por Hora</h3>
+      <div class="hourly-scroll">
+        <div class="hourly-item" *ngFor="let h of hourly">
+          <span class="text-label text-muted">{{ h.time }}</span>
+          <span class="material-symbols-outlined icon-fill text-primary">{{ h.icon }}</span>
+          <span class="text-data">{{ h.temperature }}°</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7-Day Forecast -->
+    <div class="glass-card daily-card">
+      <h3 class="text-headline-md card-title">Próximos 7 Dias</h3>
+      <div class="daily-list">
+        <div class="daily-row" *ngFor="let d of daily">
+          <span class="day-label">{{ d.day }}</span>
+          <span class="material-symbols-outlined text-primary daily-icon">{{ d.icon }}</span>
+          <div class="daily-range">
+            <span class="text-muted">{{ d.low }}°</span>
+            <div class="range-bar">
+              <div class="range-fill"></div>
+            </div>
+            <span>{{ d.high }}°</span>
+          </div>
+          <span class="precip-badge" *ngIf="d.precipChance > 40">
+            <span class="material-symbols-outlined" style="font-size:12px">water_drop</span>
+            {{ d.precipChance }}%
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sun Card -->
+  <div class="sun-card glass-card animate-in-3">
+    <div class="sun-header">
+      <h3 class="text-headline-md">Sol &amp; Lua</h3>
+      <span class="material-symbols-outlined text-tertiary icon-fill">wb_sunny</span>
+    </div>
+    <div class="sun-arc">
+      <svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20,100 Q140,-10 260,100" stroke="rgba(237,194,37,0.25)" stroke-width="2" stroke-dasharray="5,4" fill="none"/>
+        <circle cx="195" cy="35" r="8" fill="#edc225" filter="drop-shadow(0 0 10px rgba(237,194,37,0.5))"/>
+        <line x1="20" y1="100" x2="260" y2="100" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+      </svg>
+    </div>
+    <div class="sun-times">
+      <div>
+        <span class="text-label text-muted">Nascer</span>
+        <span class="text-data">{{ weather.sunrise }}</span>
+      </div>
+      <div style="text-align:right">
+        <span class="text-label text-muted">Pôr do Sol</span>
+        <span class="text-data">{{ weather.sunset }}</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading-grid">
+    <div class="skeleton" style="height:300px;border-radius:16px"></div>
+    <div class="skeleton" style="height:300px;border-radius:16px"></div>
+  </div>
+</ng-template>

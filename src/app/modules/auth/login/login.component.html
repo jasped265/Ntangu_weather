@@ -1,0 +1,94 @@
+<div class="auth-page">
+  <div class="auth-bg">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-grid"></div>
+  </div>
+
+  <div class="auth-container animate-in">
+    <!-- Brand -->
+    <div class="auth-brand">
+      <div class="brand-pill">
+        <span class="material-symbols-outlined icon-fill" style="color:var(--primary)">cloud_sync</span>
+        <span class="text-label" style="color:var(--primary)">Ntangu Weather</span>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="auth-card glass-xl">
+      <div class="auth-header">
+        <h1 class="text-headline-xl">Entrar</h1>
+        <p class="text-body-sm text-muted">Inteligência Atmosférica em Tempo Real</p>
+      </div>
+
+      <!-- Error -->
+      <div class="error-banner" *ngIf="error">
+        <span class="material-symbols-outlined">warning</span>
+        {{ error }}
+      </div>
+
+      <!-- Form -->
+      <div class="auth-form">
+        <div class="field-group">
+          <label class="form-label">{{ i18n.t('auth.email') }}</label>
+          <div class="input-with-icon">
+            <span class="material-symbols-outlined input-icon">mail</span>
+            <input class="input-glass" type="email" [(ngModel)]="email" placeholder="admin@ntangu.com" (keyup.enter)="login()"/>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="label-row">
+            <label class="form-label">{{ i18n.t('auth.password') }}</label>
+            <a class="forgot-link" routerLink="/auth/forgot-password">{{ i18n.t('auth.forgot') }}</a>
+          </div>
+          <div class="input-with-icon">
+            <span class="material-symbols-outlined input-icon">lock</span>
+            <input class="input-glass" [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" placeholder="••••••••" (keyup.enter)="login()"/>
+            <button class="eye-btn" (click)="showPassword = !showPassword">
+              <span class="material-symbols-outlined">{{ showPassword ? 'visibility_off' : 'visibility' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-primary login-btn" (click)="login()" [disabled]="loading">
+          <span *ngIf="!loading">Entrar <span class="material-symbols-outlined">arrow_forward</span></span>
+          <span *ngIf="loading">Entrando...</span>
+        </button>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider-row">
+        <div class="divider-line"></div>
+        <span class="text-label text-muted">ou continue com</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Social -->
+      <div class="social-row">
+        <button class="btn-glass social-btn">
+          <span style="font-weight:700;font-size:14px;color:#4285F4">G</span> Google
+        </button>
+        <button class="btn-glass social-btn">
+          <span class="material-symbols-outlined">ios</span> Apple
+        </button>
+      </div>
+
+      <!-- Register link -->
+      <p class="register-link text-body-sm text-muted">
+        {{ i18n.t('auth.no_account') }}
+        <a routerLink="/auth/register" class="text-primary">Criar conta</a>
+      </p>
+    </div>
+
+    <!-- Actions bar -->
+    <div class="auth-actions">
+      <button class="btn-icon" (click)="theme.toggleTheme()">
+        <span class="material-symbols-outlined">{{ theme.isDark ? 'light_mode' : 'dark_mode' }}</span>
+      </button>
+      <button class="btn-icon" (click)="i18n.toggleLang()">
+        <span class="material-symbols-outlined">translate</span>
+      </button>
+    </div>
+  </div>
+</div>

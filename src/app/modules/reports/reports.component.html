@@ -1,0 +1,106 @@
+<div class="reports animate-in">
+  <div class="page-header">
+    <div>
+      <h1 class="text-headline-xl">Relatórios e Análises</h1>
+      <p class="text-body-sm text-muted">Explore tendências climáticas e exporte dados precisos.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-glass" (click)="exportCSV()">
+        <span class="material-symbols-outlined">download</span> Exportar CSV
+      </button>
+      <button class="btn-primary" (click)="exportPDF()">
+        <span class="material-symbols-outlined">picture_as_pdf</span> Gerar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Charts row -->
+  <div class="charts-grid animate-in-1">
+    <!-- Temperature trend -->
+    <div class="glass-card chart-card">
+      <div class="chart-header">
+        <h3 class="text-headline-md">Tendência de Temperatura Anual</h3>
+        <div class="year-tabs">
+          <button class="year-tab" *ngFor="let y of years"
+            [class.active]="selectedYear === y" (click)="selectedYear = y">{{ y }}</button>
+        </div>
+      </div>
+      <div class="bar-chart">
+        <div class="bar-item" *ngFor="let bar of monthBars">
+          <div class="bar-container">
+            <div class="bar-value-label">{{ bar.temp }}°</div>
+            <div class="bar-fill" [style.height]="bar.height + 'px'"></div>
+          </div>
+          <span class="text-label text-muted">{{ bar.month }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rainfall -->
+    <div class="glass-card chart-card-sm">
+      <h3 class="text-headline-md" style="margin-bottom:20px">Índice Pluviométrico</h3>
+      <div class="rain-items">
+        <div class="rain-item">
+          <div class="rain-label-row">
+            <span class="text-body-sm">Chuva Intensa</span>
+            <span class="text-label text-primary">42%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:42%;background:var(--secondary)"></div></div>
+        </div>
+        <div class="rain-item">
+          <div class="rain-label-row">
+            <span class="text-body-sm">Moderada</span>
+            <span class="text-label text-primary">35%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:35%"></div></div>
+        </div>
+        <div class="rain-item">
+          <div class="rain-label-row">
+            <span class="text-body-sm">Seco / Estiagem</span>
+            <span class="text-label text-primary">23%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:23%;background:var(--tertiary)"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export history + alert -->
+  <div class="bottom-grid animate-in-2">
+    <div class="glass-card exports-card">
+      <h3 class="text-headline-md" style="margin-bottom:16px">Histórico de Exportações</h3>
+      <div class="export-list">
+        <div class="export-row" *ngFor="let exp of exports">
+          <div class="export-icon" [class.pdf]="exp.type === 'pdf'" [class.csv]="exp.type === 'csv'">
+            <span class="material-symbols-outlined">{{ exp.icon }}</span>
+          </div>
+          <div class="export-info">
+            <p class="text-body-sm" style="font-weight:600">{{ exp.name }}</p>
+            <p class="text-label text-muted">{{ exp.date }} · {{ exp.size }}</p>
+          </div>
+          <button class="btn-icon" style="width:32px;height:32px">
+            <span class="material-symbols-outlined" style="font-size:18px">download</span>
+          </button>
+          <button class="btn-icon" style="width:32px;height:32px">
+            <span class="material-symbols-outlined" style="font-size:18px">more_vert</span>
+          </button>
+        </div>
+      </div>
+      <button class="btn-glass" style="width:100%;justify-content:center;margin-top:12px">
+        Ver todos os arquivos
+      </button>
+    </div>
+
+    <div class="glass-card anomaly-card">
+      <div class="anomaly-header">
+        <span class="material-symbols-outlined icon-fill" style="color:var(--error);font-size:28px">warning</span>
+        <h4 class="text-headline-md text-error">Anomalia Detectada</h4>
+      </div>
+      <p class="text-body-lg" style="margin-bottom:8px;font-weight:600">Estiagem Prolongada</p>
+      <p class="text-body-sm text-muted" style="margin-bottom:20px">A região apresenta queda de 15% na média histórica de chuvas para este trimestre.</p>
+      <button class="btn-primary" style="width:100%;justify-content:center;background:rgba(255,180,171,0.2);color:var(--error);border:1px solid rgba(255,180,171,0.3)">
+        Analisar Impacto
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,47 @@
+<aside class="sidebar">
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <span class="material-symbols-outlined icon-fill">cloud_sync</span>
+    </div>
+    <div>
+      <h1 class="brand-name">Ntangu</h1>
+      <p class="brand-tagline">{{ i18n.t('nav.dashboard') === 'Dashboard' ? 'Atmospheric Intelligence' : 'Inteligência Atmosférica' }}</p>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <a
+      *ngFor="let item of visibleItems"
+      class="nav-item"
+      [class.active]="isActive(item.route)"
+      [routerLink]="item.route"
+    >
+      <span class="material-symbols-outlined" [class.icon-fill]="isActive(item.route)">{{ item.icon }}</span>
+      <span class="nav-label">{{ i18n.t(item.label) }}</span>
+    </a>
+  </nav>
+
+  <!-- User Card -->
+  <div class="sidebar-footer">
+    <div class="user-card glass-card">
+      <div class="user-info">
+        <div class="user-avatar">
+          <span class="material-symbols-outlined icon-fill">account_circle</span>
+        </div>
+        <div class="user-details">
+          <p class="user-name">{{ auth.currentUser?.name }}</p>
+          <p class="user-role">{{ auth.currentUser?.role === 'admin' ? 'Administrador' : 'Usuário' }}</p>
+        </div>
+      </div>
+      <button class="btn-primary w-full" style="justify-content: center; margin-top: 12px;" routerLink="/settings">
+        Upgrade to Pro
+      </button>
+      <button class="logout-btn" (click)="logout()">
+        <span class="material-symbols-outlined">logout</span>
+        Sair
+      </button>
+    </div>
+  </div>
+</aside>

@@ -1,0 +1,85 @@
+<div class="auth-page">
+  <div class="auth-bg">
+    <div class="bg-blob blob-1"></div>
+    <div class="bg-blob blob-2"></div>
+    <div class="bg-grid"></div>
+  </div>
+
+  <div class="auth-container animate-in" style="max-width:500px">
+    <div class="auth-brand">
+      <div class="brand-pill">
+        <span class="material-symbols-outlined icon-fill" style="color:var(--primary)">cloud_sync</span>
+        <span class="text-label" style="color:var(--primary)">Ntangu Weather</span>
+      </div>
+    </div>
+
+    <div class="auth-card glass-xl">
+      <div class="auth-header">
+        <h1 class="text-headline-xl">Criar Conta</h1>
+        <p class="text-body-sm text-muted">Comece sua jornada meteorológica hoje.</p>
+      </div>
+
+      <div class="error-banner" *ngIf="error">
+        <span class="material-symbols-outlined">warning</span>{{ error }}
+      </div>
+
+      <div class="auth-form">
+        <div class="field-group">
+          <label class="form-label">Nome Completo</label>
+          <div class="input-with-icon">
+            <span class="material-symbols-outlined input-icon">person</span>
+            <input class="input-glass" type="text" [(ngModel)]="name" placeholder="Ex: Ana Silva"/>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="form-label">E-mail</label>
+          <div class="input-with-icon">
+            <span class="material-symbols-outlined input-icon">mail</span>
+            <input class="input-glass" type="email" [(ngModel)]="email" placeholder="seu@email.com"/>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="form-label">Senha</label>
+          <div class="input-with-icon">
+            <span class="material-symbols-outlined input-icon">lock</span>
+            <input class="input-glass" type="password" [(ngModel)]="password" placeholder="Mínimo 8 caracteres"/>
+          </div>
+          <!-- Strength bar -->
+          <div class="strength-bars" *ngIf="password">
+            <div class="strength-bar" *ngFor="let i of [0,1,2,3]"
+              [style.background]="i < passwordStrength ? (passwordStrength >= 3 ? 'var(--tertiary)' : 'var(--primary)') : 'var(--glass-border)'">
+            </div>
+          </div>
+          <span class="text-label text-muted" *ngIf="password">Segurança: {{ strengthLabel }}</span>
+        </div>
+
+        <label class="terms-row">
+          <input type="checkbox" [(ngModel)]="agreed"/>
+          <span class="text-body-sm text-muted">
+            Concordo com os <a href="#" class="text-primary">Termos</a> e a <a href="#" class="text-primary">Política de Privacidade</a>
+          </span>
+        </label>
+
+        <button class="btn-primary login-btn" (click)="register()" [disabled]="loading">
+          <span *ngIf="!loading">Criar Minha Conta <span class="material-symbols-outlined">arrow_forward</span></span>
+          <span *ngIf="loading">Criando...</span>
+        </button>
+      </div>
+
+      <p class="register-link text-body-sm text-muted">
+        Já tem uma conta? <a routerLink="/auth/login" class="text-primary">Entrar</a>
+      </p>
+    </div>
+
+    <div class="auth-actions">
+      <button class="btn-icon" (click)="theme.toggleTheme()">
+        <span class="material-symbols-outlined">{{ theme.isDark ? 'light_mode' : 'dark_mode' }}</span>
+      </button>
+      <button class="btn-icon" (click)="i18n.toggleLang()">
+        <span class="material-symbols-outlined">translate</span>
+      </button>
+    </div>
+  </div>
+</div>
