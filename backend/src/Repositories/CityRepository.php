@@ -72,6 +72,17 @@ final class CityRepository
         ]);
     }
 
+    public function updateGeo(int $id, string $country, float $lat, float $lon): bool
+    {
+        $stmt = $this->pdo->prepare('UPDATE cities SET country = :country, lat = :lat, lon = :lon WHERE id = :id');
+        return $stmt->execute([
+            ':id' => $id,
+            ':country' => $country,
+            ':lat' => $lat,
+            ':lon' => $lon,
+        ]);
+    }
+
     public function delete(int $id): bool
     {
         $stmt = $this->pdo->prepare('DELETE FROM cities WHERE id = :id');

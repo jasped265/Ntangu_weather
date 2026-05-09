@@ -1,0 +1,300 @@
+<div class="history-page animate-in">
+  <!-- Header -->
+  <div class="history-header">
+    <div class="header-left">
+      <h1 class="text-headline-xl">Dados Históricos</h1>
+      <p class="text-body-sm text-muted">
+        Padrões climáticos reais via Open-Meteo
+      </p>
+    </div>
+
+    <!-- City selector -->
+    <div
+      class="city-selector"
+      (click)="showCityDropdown = !showCityDropdown"
+      [class.open]="showCityDropdown"
+    >
+      <span class="material-symbols-outlined">location_on</span>
+      <span class="city-name">{{ selectedCity.name }}</span>
+      <span class="material-symbols-outlined chevron">expand_more</span>
+      <div
+        class="city-dropdown"
+        *ngIf="showCityDropdown"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          *ngFor="let city of cities"
+          class="city-option"
+          [class.active]="city.name === selectedCity.name"
+          (click)="selectCity(city)"
+        >
+          <span class="material-symbols-outlined">{{
+            city.name === selectedCity.name ? "location_on" : "location_city"
+          }}</span>
+          {{ city.name }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Range selector -->
+  <div class="range-row animate-in-1">
+    <div class="range-tabs">
+      <button
+        *ngFor="let r of ranges"
+        class="range-btn"
+        [class.active]="activeRange === r.key"
+        (click)="selectRange(r.key)"
+      >
+        {{ r.label }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Metric tabs -->
+  <div class="metric-tabs animate-in-1">
+    <button
+      *ngFor="let tab of tabs"
+      class="metric-tab"
+      [class.active]="activeTab === tab.key"
+      (click)="selectTab(tab.key)"
+    >
+      <span class="material-symbols-outlined">{{ tab.icon }}</span>
+      <span>{{ tab.label }}</span>
+    </button>
+  </div>
+
+  <!-- Error state -->
+  <div
+    class="error-card glass-card animate-in-2"
+    *ngIf="hasError && !isLoading"
+  >
+    <span class="material-symbols-outlined error-icon">cloud_off</span>
+    <div>
+      <p class="text-body-lg">Não foi possível carregar os dados</p>
+      <p class="text-body-sm text-muted">Verifica a tua ligação à internet</p>
+    </div>
+    <button class="btn-primary" (click)="retry()">
+      <span class="material-symbols-outlined">refresh</span>
+      Tentar novamente
+    </button>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row animate-in-2" *ngIf="!hasError">
+    <div class="stat-card glass-card">
+      <span class="stat-label text-label text-muted">Máxima</span>
+      <span class="stat-value text-data"
+        >{{ stats.max }}<small>{{ currentTab.unit }}</small></span
+      >
+    </div>
+    <div class="stat-card glass-card">
+      <span class="stat-label text-label text-muted">Mínima</span>
+      <span class="stat-value text-data"
+        >{{ stats.min }}<small>{{ currentTab.unit }}</small></span
+      >
+    </div>
+    <div class="stat-card glass-card">
+      <span class="stat-label text-label text-muted">Média</span>
+      <span class="stat-value text-data"
+        >{{ stats.avg }}<small>{{ currentTab.unit }}</small></span
+      >
+    </div>
+    <div class="stat-card glass-card">
+      <span class="stat-label text-label text-muted">
+        {{ activeTab === "chuva" ? "Total" : "Amplitude" }}
+      </span>
+      <span class="stat-value text-data">
+        {{ activeTab === "chuva" ? stats.total : stats.max - stats.min
+        }}<small>{{ currentTab.unit }}</small>
+      </span>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="chart-section glass-card animate-in-2" *ngIf="!hasError">
+    <div class="chart-header">
+      <div class="chart-title">
+        <span
+          class="material-symbols-outlined"
+          [style.color]="currentTab.color"
+          >{{ currentTab.icon }}</span
+        >
+        <span class="text-body-lg"
+          >{{ currentTab.label }} — {{ selectedCity.name }}</span
+        >
+      </div>
+      <div class="chart-meta text-muted" style="font-size: 12px">
+        {{
+          activeRange === "1a" || activeRange === "5a"
+            ? "Médias mensais"
+            : "Dados diários"
+        }}
+      </div>
+    </div>
+
+    <div class="chart-wrap" [class.loading]="isLoading">
+      <div class="loading-overlay" *ngIf="isLoading">
+        <div class="loading-spinner">
+          <span class="material-symbols-outlined animate-pulse">history</span>
+          <span class="text-muted text-body-sm">A carregar dados reais...</span>
+        </div>
+      </div>
+      <canvas #tempCanvas></canvas>
+    </div>
+  </div>
+
+  <!-- Monthly summary (1a / 5a) -->
+  <div
+    class="monthly-section animate-in-3"
+    *ngIf="
+      !hasError &&
+      (activeRange === '1a' || activeRange === '5a') &&
+      monthlyData.length
+    "
+  >
+    <h2 class="section-title text-headline-md">Resumo Mensal</h2>
+    <div class="monthly-grid">
+      <div
+        class="month-card glass-card glass-card-hover"
+        *ngFor="let m of monthlyData"
+      >
+        <div class="month-name">{{ m.month }}</div>
+        <div class="month-metrics">
+          <div class="month-metric" *ngIf="activeTab === 'temperatura'">
+            <span
+              class="material-symbols-outlined"
+              style="color: var(--primary); font-size: 16px"
+              >thermostat</span
+            >
+            <span class="text-data" style="font-size: 16px"
+              >{{ m.avgTemp }}°</span
+            >
+          </div>
+          <div class="month-metric" *ngIf="activeTab === 'chuva'">
+            <span
+              class="material-symbols-outlined"
+              style="color: var(--secondary); font-size: 16px"
+              >water_drop</span
+            >
+            <span class="text-data" style="font-size: 16px"
+              >{{ m.totalRain }}mm</span
+            >
+          </div>
+          <div class="month-metric" *ngIf="activeTab === 'humidade'">
+            <span
+              class="material-symbols-outlined"
+              style="color: var(--tertiary); font-size: 16px"
+              >humidity_percentage</span
+            >
+            <span class="text-data" style="font-size: 16px"
+              >{{ m.avgHumidity }}%</span
+            >
+          </div>
+          <div class="month-metric" *ngIf="activeTab === 'vento'">
+            <span
+              class="material-symbols-outlined"
+              style="color: var(--primary); font-size: 16px"
+              >air</span
+            >
+            <span class="text-data" style="font-size: 16px"
+              >{{ m.avgWind }}km/h</span
+            >
+          </div>
+        </div>
+        <div class="month-bar">
+          <div
+            class="month-bar-fill"
+            [style.width.%]="
+              activeTab === 'temperatura'
+                ? (m.avgTemp / 40) * 100
+                : activeTab === 'chuva'
+                  ? (m.totalRain / 250) * 100
+                  : activeTab === 'humidade'
+                    ? m.avgHumidity
+                    : (m.avgWind / 40) * 100
+            "
+            [style.background]="currentTab.color"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Daily table (30d / 90d) -->
+  <div
+    class="table-section glass-card animate-in-3"
+    *ngIf="
+      !hasError &&
+      (activeRange === '30d' || activeRange === '90d') &&
+      dailyData.length
+    "
+  >
+    <div class="table-header-row">
+      <h2 class="section-title text-headline-md">Dados Diários</h2>
+      <span class="text-muted text-body-sm"
+        >{{ dailyData.length }} registos — Open-Meteo</span
+      >
+    </div>
+    <div class="table-scroll">
+      <table class="data-table history-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Condição</th>
+            <th>Temp. Máx</th>
+            <th>Temp. Mín</th>
+            <th>Humidade</th>
+            <th>Precipitação</th>
+            <th>Vento</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of dailyData">
+            <td>
+              <div class="date-cell">
+                <span class="day-label text-muted">{{ d.dayLabel }}</span>
+                <span>{{ d.label }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="condition-cell">
+                <span class="material-symbols-outlined icon-sm">{{
+                  d.icon
+                }}</span>
+                <span>{{ d.condition }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="value-badge temp-max">{{ d.tempMax }}°C</span>
+            </td>
+            <td>
+              <span class="value-badge temp-min">{{ d.tempMin }}°C</span>
+            </td>
+            <td>
+              <div class="bar-cell">
+                <div class="mini-bar">
+                  <div
+                    class="mini-bar-fill humidity"
+                    [style.width.%]="d.humidity"
+                  ></div>
+                </div>
+                <span>{{ d.humidity }}%</span>
+              </div>
+            </td>
+            <td>
+              <span
+                class="value-badge"
+                [class.rain-yes]="d.rainfall > 0"
+                [class.rain-no]="d.rainfall === 0"
+              >
+                {{ d.rainfall }}mm
+              </span>
+            </td>
+            <td>{{ d.wind }} km/h</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

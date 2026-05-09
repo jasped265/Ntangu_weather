@@ -5,9 +5,19 @@
       <input
         class="search-input"
         type="text"
-        [(ngModel)]="searchQuery"
+        [ngModel]="searchQuery"
+        (ngModelChange)="onSearchChange($event)"
         [placeholder]="i18n.t('search')"
       />
+      <div class="search-dropdown" *ngIf="results.length > 0">
+        <button class="search-item" type="button" *ngFor="let r of results" (click)="selectLocation(r)">
+          <span class="material-symbols-outlined">location_on</span>
+          <span class="search-item-text">
+            <span style="font-weight:600">{{ r.name }}</span>
+            <span class="text-muted" style="margin-left:6px">{{ r.region ? (r.region + ', ') : '' }}{{ r.country }}</span>
+          </span>
+        </button>
+      </div>
     </div>
 
     <div class="topbar-actions">

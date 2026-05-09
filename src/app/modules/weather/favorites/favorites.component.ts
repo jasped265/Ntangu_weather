@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { WeatherService } from '../../../shared/services/weather.service';
 import { City } from '../../../shared/models/weather.model';
+import { WeatherData } from '../../../shared/models/weather.model';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-favorites',
@@ -12,16 +15,7 @@ export class FavoritesComponent implements OnInit {
   allCities: City[] = [];
   loading = true;
   showAdd = false;
-
-  mockTemps: Record<string, { temp: number; condition: string; icon: string; humidity: number; wind: number }> = {
-    'Luanda':       { temp: 28, condition: 'Parcialmente Nublado', icon: 'partly_cloudy_day', humidity: 74, wind: 14 },
-    'Lisboa':       { temp: 19, condition: 'Céu Limpo',            icon: 'wb_sunny',          humidity: 55, wind: 10 },
-    'Porto':        { temp: 16, condition: 'Chuva Fraca',          icon: 'rainy',             humidity: 88, wind: 18 },
-    'São Paulo':    { temp: 29, condition: 'Ensolarado',           icon: 'wb_sunny',          humidity: 62, wind:  8 },
-    'Rio de Janeiro':{ temp: 31, condition: 'Ensolarado',          icon: 'wb_sunny',          humidity: 70, wind: 12 },
-    'Braga':        { temp: 14, condition: 'Nublado',              icon: 'cloud',             humidity: 80, wind: 15 },
-    'Funchal':      { temp: 22, condition: 'Parcialmente Nublado', icon: 'partly_cloudy_day', humidity: 60, wind:  9 },
-  };
+  weatherByCity: Record<string, WeatherData> = {};
 
   constructor(private ws: WeatherService) {}
 
@@ -29,12 +23,37 @@ export class FavoritesComponent implements OnInit {
     this.ws.getCities().subscribe((c: City[]) => {
       this.allCities = c;
       this.cities = c.filter((x: City) => x.isFavorite);
+      this.refreshWeather();
+    });
+  }
+
+  refreshWeather(): void {
+    if (!this.cities.length) {
+      this.weatherByCity = {};
+      this.loading = false;
+      return;
+    }
+
+    this.loading = true;
+    const requests = this.cities.map((c) =>
+      this.ws.getCurrentWeather(c.name).pipe(
+        catchError(() => of(null)),
+        map((w) => ({ key: c.name, value: w }))
+      )
+    );
+
+    forkJoin(requests).subscribe((rows) => {
+      const next: Record<string, WeatherData> = {};
+      for (const r of rows) {
+        if (r.value) next[r.key] = r.value;
+      }
+      this.weatherByCity = next;
       this.loading = false;
     });
   }
 
-  getWeather(city: string) {
-    return this.mockTemps[city] || { temp: 20, condition: 'N/A', icon: 'cloud', humidity: 60, wind: 10 };
+  getWeather(city: string): WeatherData | null {
+    return this.weatherByCity[city] || null;
   }
 
   toggleFavorite(city: City): void {
@@ -43,6 +62,7 @@ export class FavoritesComponent implements OnInit {
       next: () => {
         city.isFavorite = next;
         this.cities = this.allCities.filter((c: City) => c.isFavorite);
+        this.refreshWeather();
       },
       error: () => {
         // Mantem estado anterior se falhar a chamada da API.
@@ -52,7 +72,10 @@ export class FavoritesComponent implements OnInit {
 
   get avgTemp(): number {
     if (!this.cities.length) return 0;
-    const temps = this.cities.map((c: City) => this.getWeather(c.name).temp);
+    const temps = this.cities
+      .map((c: City) => this.getWeather(c.name)?.temperature)
+      .filter((x): x is number => typeof x === 'number');
+    if (!temps.length) return 0;
     return Math.round(temps.reduce((a: number, b: number) => a + b, 0) / temps.length);
   }
 

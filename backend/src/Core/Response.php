@@ -39,4 +39,22 @@ final class Response
     {
         return $_SERVER['HTTP_X_REQUEST_ID'] ?? bin2hex(random_bytes(16));
     }
+
+   public static function pdf(string $filename, string $content, bool $binary = true): void
+{
+    if ($binary) {
+        // PDF binário gerado pelo Dompdf — descarrega directamente
+        header('Content-Type: application/pdf');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Content-Length: ' . strlen($content));
+    } else {
+        header('Content-Type: text/html; charset=UTF-8');
+        header('Content-Disposition: inline; filename="' . $filename . '"');
+    }
+    header('Cache-Control: no-cache, no-store, must-revalidate');
+    header('X-Content-Type-Options: nosniff');
+    echo $content;
+    exit;
+}
+ 
 }

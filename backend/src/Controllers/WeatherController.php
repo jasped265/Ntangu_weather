@@ -20,7 +20,7 @@ final class WeatherController
         try {
             Response::json(true, 'Clima actual carregado', $this->weatherService->current($city));
         } catch (\Throwable $e) {
-            Response::json(false, 'Falha ao obter clima actual', null, 503, ['weather' => [$e->getMessage()]]);
+            Response::json(false, 'Falha ao obter clima actual', null, $this->statusFrom($e), ['weather' => [$e->getMessage()]]);
         }
     }
 
@@ -30,7 +30,7 @@ final class WeatherController
         try {
             Response::json(true, 'Previsão horária carregada', $this->weatherService->hourly($city));
         } catch (\Throwable $e) {
-            Response::json(false, 'Falha ao obter previsão horária', null, 503, ['weather' => [$e->getMessage()]]);
+            Response::json(false, 'Falha ao obter previsão horária', null, $this->statusFrom($e), ['weather' => [$e->getMessage()]]);
         }
     }
 
@@ -40,7 +40,7 @@ final class WeatherController
         try {
             Response::json(true, 'Previsão diária carregada', $this->weatherService->daily($city));
         } catch (\Throwable $e) {
-            Response::json(false, 'Falha ao obter previsão diária', null, 503, ['weather' => [$e->getMessage()]]);
+            Response::json(false, 'Falha ao obter previsão diária', null, $this->statusFrom($e), ['weather' => [$e->getMessage()]]);
         }
     }
 
@@ -50,7 +50,7 @@ final class WeatherController
         try {
             Response::json(true, 'Resumo meteorológico carregado', $this->weatherService->summary($city));
         } catch (\Throwable $e) {
-            Response::json(false, 'Falha ao obter resumo', null, 503, ['weather' => [$e->getMessage()]]);
+            Response::json(false, 'Falha ao obter resumo', null, $this->statusFrom($e), ['weather' => [$e->getMessage()]]);
         }
     }
 
@@ -60,7 +60,7 @@ final class WeatherController
         try {
             Response::json(true, 'Alertas carregados', $this->weatherService->alerts($city));
         } catch (\Throwable $e) {
-            Response::json(false, 'Falha ao obter alertas', null, 503, ['weather' => [$e->getMessage()]]);
+            Response::json(false, 'Falha ao obter alertas', null, $this->statusFrom($e), ['weather' => [$e->getMessage()]]);
         }
     }
 
@@ -69,7 +69,16 @@ final class WeatherController
         try {
             Response::json(true, 'Marcadores do mapa carregados', $this->weatherService->markers());
         } catch (\Throwable $e) {
-            Response::json(false, 'Falha ao obter marcadores', null, 503, ['weather' => [$e->getMessage()]]);
+            Response::json(false, 'Falha ao obter marcadores', null, $this->statusFrom($e), ['weather' => [$e->getMessage()]]);
         }
+    }
+
+    private function statusFrom(\Throwable $e): int
+    {
+        $code = (int)$e->getCode();
+        if ($code >= 400 && $code <= 599) {
+            return $code;
+        }
+        return 500;
     }
 }

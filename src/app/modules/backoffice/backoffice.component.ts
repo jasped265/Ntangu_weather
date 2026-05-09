@@ -1,13 +1,15 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { WeatherService } from '../../shared/services/weather.service';
 import { User, City, WeatherAlert } from '../../shared/models/weather.model';
+import { LocationStoreService } from '../../shared/services/location-store.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-backoffice',
   templateUrl: './backoffice.component.html',
   styleUrls: ['./backoffice.component.scss']
 })
-export class BackofficeComponent implements OnInit {
+export class BackofficeComponent implements OnInit, OnDestroy {
   users: User[] = [];
   cities: City[] = [];
   alerts: WeatherAlert[] = [];
@@ -17,6 +19,7 @@ export class BackofficeComponent implements OnInit {
   showCityModal = false;
   newUser = { name: '', email: '', role: 'user' as 'admin'|'user', plan: 'free' as 'free'|'premium'|'pro' };
   newCity = { name: '', country: '', lat: 0, lon: 0 };
+  private readonly destroy$ = new Subject<void>();
 
   stats = [
     { label: 'Total Usuários', value: '12,482', icon: 'group', delta: '+14% este mês', deltaPositive: true },
@@ -25,12 +28,19 @@ export class BackofficeComponent implements OnInit {
     { label: 'Receita (EUR)', value: '€42,1k', icon: 'payments', delta: 'Meta alcançada', deltaPositive: true },
   ];
 
-  constructor(private ws: WeatherService) {}
+  constructor(private ws: WeatherService, private locationStore: LocationStoreService) {}
 
   ngOnInit(): void {
     this.ws.getUsers().subscribe(u => { this.users = u; this.loading = false; });
     this.ws.getCities().subscribe(c => this.cities = c);
-    this.ws.getAlerts().subscribe(a => this.alerts = a);
+    this.locationStore.selected$.pipe(takeUntil(this.destroy$)).subscribe((loc) => {
+      this.ws.getAlerts(loc.name).subscribe(a => this.alerts = a);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   deleteUser(id: string): void {

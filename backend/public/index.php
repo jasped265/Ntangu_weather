@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Core\DB;
+use App\Core\Env;
 use App\Core\Logger;
 use App\Core\Request;
 use App\Core\Response;
@@ -23,6 +24,8 @@ spl_autoload_register(function (string $class): void {
         require_once $path;
     }
 });
+
+Env::load(dirname(__DIR__));
 
 $appConfig = require dirname(__DIR__) . '/config/app.php';
 $dbConfig = require dirname(__DIR__) . '/config/db.php';

@@ -34,16 +34,16 @@
         <p class="text-body-sm text-muted">{{ cities[0].country }}</p>
       </div>
       <div class="hero-temp-block">
-        <span class="hero-temp">{{ getWeather(cities[0].name).temp }}°</span>
+        <span class="hero-temp">{{ getWeather(cities[0].name)?.temperature ?? '--' }}°</span>
         <div>
-          <span class="material-symbols-outlined icon-fill text-tertiary" style="font-size:40px">{{ getWeather(cities[0].name).icon }}</span>
-          <p class="text-headline-md text-primary">{{ getWeather(cities[0].name).condition }}</p>
+          <span class="material-symbols-outlined icon-fill text-tertiary" style="font-size:40px">{{ getWeather(cities[0].name)?.conditionIcon ?? 'cloud' }}</span>
+          <p class="text-headline-md text-primary">{{ getWeather(cities[0].name)?.condition ?? '—' }}</p>
         </div>
       </div>
     </div>
     <div class="hero-footer">
-      <span class="text-body-sm text-muted">Humidade {{ getWeather(cities[0].name).humidity }}%</span>
-      <span class="text-body-sm text-muted">Vento {{ getWeather(cities[0].name).wind }} km/h</span>
+      <span class="text-body-sm text-muted">Humidade {{ getWeather(cities[0].name)?.humidity ?? '--' }}%</span>
+      <span class="text-body-sm text-muted">Vento {{ getWeather(cities[0].name)?.windSpeed ?? '--' }} km/h</span>
       <button class="btn-icon" (click)="toggleFavorite(cities[0])">
         <span class="material-symbols-outlined icon-fill" style="color:var(--error)">favorite</span>
       </button>
@@ -63,15 +63,15 @@
         </button>
       </div>
       <div class="city-card-main">
-        <span class="city-temp">{{ getWeather(city.name).temp }}°</span>
+        <span class="city-temp">{{ getWeather(city.name)?.temperature ?? '--' }}°</span>
         <div style="text-align:right">
-          <span class="material-symbols-outlined icon-fill text-primary" style="font-size:28px">{{ getWeather(city.name).icon }}</span>
-          <p class="text-label text-muted">{{ getWeather(city.name).condition }}</p>
+          <span class="material-symbols-outlined icon-fill text-primary" style="font-size:28px">{{ getWeather(city.name)?.conditionIcon ?? 'cloud' }}</span>
+          <p class="text-label text-muted">{{ getWeather(city.name)?.condition ?? '—' }}</p>
         </div>
       </div>
       <div class="city-card-footer">
-        <span class="text-body-sm text-muted">H: {{ getWeather(city.name).humidity }}%</span>
-        <span class="text-body-sm text-muted">V: {{ getWeather(city.name).wind }} km/h</span>
+        <span class="text-body-sm text-muted">H: {{ getWeather(city.name)?.humidity ?? '--' }}%</span>
+        <span class="text-body-sm text-muted">V: {{ getWeather(city.name)?.windSpeed ?? '--' }} km/h</span>
       </div>
     </div>
 
@@ -105,7 +105,7 @@
       </div>
       <div class="insight-card glass-card" style="text-align:center;padding:20px">
         <p class="text-label text-muted">Índice UV Médio</p>
-        <p class="text-display" style="font-size:48px;line-height:1.2;color:var(--tertiary);margin-top:8px">4</p>
+        <p class="text-display" style="font-size:48px;line-height:1.2;color:var(--tertiary);margin-top:8px">—</p>
       </div>
     </div>
   </div>

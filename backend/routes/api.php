@@ -6,6 +6,7 @@ use App\Controllers\AdminController;
 use App\Controllers\AuthController;
 use App\Controllers\CityController;
 use App\Controllers\FavoriteController;
+use App\Controllers\LocationController;
 use App\Controllers\ReportController;
 use App\Controllers\SettingsController;
 use App\Controllers\WeatherController;
@@ -18,6 +19,7 @@ use App\Repositories\WeatherCacheRepository;
 use App\Services\AdminService;
 use App\Services\AuthService;
 use App\Services\FavoriteService;
+use App\Services\LocationService;
 use App\Services\ReportService;
 use App\Services\SettingsService;
 use App\Services\WeatherService;
@@ -31,6 +33,7 @@ $reportRepo = new ReportRepository($pdo);
 
 $authService = new AuthService($pdo, $userRepo, $tokenService, $appConfig);
 $weatherService = new WeatherService($appConfig, $cityRepo, $weatherCacheRepo, $pdo);
+$locationService = new LocationService($appConfig);
 $favoriteService = new FavoriteService($favoriteRepo);
 $settingsService = new SettingsService($settingsRepo);
 $adminService = new AdminService($userRepo, $cityRepo);
@@ -39,6 +42,7 @@ $reportService = new ReportService($reportRepo, $userRepo, $cityRepo);
 $authController = new AuthController($authService, $userRepo);
 $weatherController = new WeatherController($weatherService);
 $cityController = new CityController($cityRepo);
+$locationController = new LocationController($locationService);
 $favoriteController = new FavoriteController($favoriteService);
 $settingsController = new SettingsController($settingsService);
 $adminController = new AdminController($adminService, $cityRepo, $pdo);
@@ -65,6 +69,9 @@ $router->add('GET', '/api/v1/weather/hourly', fn($r) => $weatherController->hour
 $router->add('GET', '/api/v1/weather/daily', fn($r) => $weatherController->daily($r), [$auth]);
 $router->add('GET', '/api/v1/weather/summary', fn($r) => $weatherController->summary($r), [$auth]);
 $router->add('GET', '/api/v1/weather/alerts', fn($r) => $weatherController->alerts($r), [$auth]);
+
+// Location search (WeatherAPI search).
+$router->add('GET', '/api/v1/locations/search', fn($r) => $locationController->search($r), [$auth]);
 
 // Cities.
 $router->add('GET', '/api/v1/cities', fn($r) => $cityController->index($r), [$auth]);
@@ -94,10 +101,15 @@ $router->add('DELETE', '/api/v1/admin/cities/{id}', fn($r) => $adminController->
 $router->add('GET', '/api/v1/admin/alerts', fn() => $adminController->alerts(), [$auth, $admin]);
 
 // Reports.
-$router->add('GET', '/api/v1/reports', fn() => $reportController->index(), [$auth, $admin]);
-$router->add('POST', '/api/v1/reports/generate', fn($r) => $reportController->generate($r), [$auth, $admin]);
-$router->add('GET', '/api/v1/reports/summary', fn() => $reportController->summary(), [$auth, $admin]);
-$router->add('GET', '/api/v1/reports/export/csv', fn($r) => $reportController->exportCsv($r), [$auth, $admin]);
+// ATENÇÃO: rotas estáticas (/summary, /export/csv) DEVEM vir ANTES da rota dinâmica ({id})
+// para o router não interpretar "summary" ou "export" como um ID.
+$router->add('GET',  '/api/v1/reports',             fn()    => $reportController->index(),             [$auth, $admin]);
+$router->add('POST', '/api/v1/reports/generate',     fn($r)  => $reportController->generate($r),       [$auth, $admin]);
+$router->add('GET',  '/api/v1/reports/summary',      fn()    => $reportController->summary(),           [$auth, $admin]);
+$router->add('GET',  '/api/v1/reports/export/csv',   fn($r)  => $reportController->exportCsv($r),      [$auth, $admin]);
+// Novas rotas: download individual por relatório
+$router->add('GET',  '/api/v1/reports/{id}/export/csv', fn($r) => $reportController->exportReportCsv($r), [$auth, $admin]);
+$router->add('GET',  '/api/v1/reports/{id}/export/pdf', fn($r) => $reportController->exportReportPdf($r), [$auth, $admin]);
 
 // Map.
 $router->add('GET', '/api/v1/map/markers', fn() => $weatherController->markers(), [$auth]);

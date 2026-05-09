@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { WeatherService } from '../../shared/services/weather.service';
 import { WeatherData, HourlyForecast, DailyForecast } from '../../shared/models/weather.model';
+import { LocationStoreService } from '../../shared/services/location-store.service';
+import { Subject, switchMap, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,16 +14,39 @@ export class DashboardComponent implements OnInit {
   hourly: HourlyForecast[] = [];
   daily: DailyForecast[] = [];
   loading = true;
+  private readonly destroy$ = new Subject<void>();
 
-  constructor(private ws: WeatherService) {}
+  constructor(private ws: WeatherService, private locationStore: LocationStoreService) {}
 
   ngOnInit(): void {
-    this.ws.getCurrentWeather().subscribe(w => {
-      this.weather = w;
-      this.loading = false;
-    });
-    this.ws.getHourlyForecast().subscribe(h => this.hourly = h);
-    this.ws.getDailyForecast().subscribe(d => this.daily = d);
+    this.locationStore.selected$
+      .pipe(
+        switchMap((loc) => this.ws.getCurrentWeather(loc.name)),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((w) => {
+        this.weather = w;
+        this.loading = false;
+      });
+
+    this.locationStore.selected$
+      .pipe(
+        switchMap((loc) => this.ws.getHourlyForecast(loc.name)),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((h) => (this.hourly = h));
+
+    this.locationStore.selected$
+      .pipe(
+        switchMap((loc) => this.ws.getDailyForecast(loc.name)),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((d) => (this.daily = d));
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   getMetricColor(value: number, metric: string): string {

@@ -15,8 +15,14 @@ return [
     'jwt_ttl_minutes' => (int) ($_ENV['JWT_TTL_MINUTES'] ?? getenv('JWT_TTL_MINUTES') ?: 30),
     'refresh_ttl_days' => (int) ($_ENV['REFRESH_TTL_DAYS'] ?? getenv('REFRESH_TTL_DAYS') ?: 7),
 
-    'weather_api_key' => $_ENV['WEATHERAPI_KEY'] ?? getenv('WEATHERAPI_KEY') ?: '',
-    'weather_api_base' => $_ENV['WEATHERAPI_BASE'] ?? getenv('WEATHERAPI_BASE') ?: 'https://api.weatherapi.com/v1',
+    'weather_api_key' => trim((string)($_ENV['WEATHERAPI_KEY'] ?? getenv('WEATHERAPI_KEY') ?: '')),
+    'weather_api_base' => rtrim((string)(
+        $_ENV['WEATHERAPI_BASE']
+        ?? getenv('WEATHERAPI_BASE')
+        ?? $_ENV['weather_api_base']
+        ?? getenv('weather_api_base')
+        ?: 'https://api.weatherapi.com/v1'
+    ), '/'),
     // Compatibilidade com plano gratuito da WeatherAPI (normalmente max 3 dias).
     'weather_forecast_days' => (int) ($_ENV['WEATHER_FORECAST_DAYS'] ?? getenv('WEATHER_FORECAST_DAYS') ?: 3),
 ];
