@@ -121,7 +121,8 @@
       <div class="table-footer">
         <p class="text-body-sm text-muted">
           {{ i18n.t("backoffice.showing") }} {{ users.length }}
-          {{ i18n.t("backoffice.of") }} 12,482 {{ i18n.t("backoffice.users") }}
+          {{ i18n.t("backoffice.of") }} {{ totalUsers | number }}
+          {{ i18n.t("backoffice.users") }}
         </p>
         <div class="pagination">
           <button class="btn-icon" style="width: 34px; height: 34px">

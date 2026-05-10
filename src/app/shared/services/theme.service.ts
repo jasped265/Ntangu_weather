@@ -203,6 +203,7 @@ export class I18nService {
       'backoffice.field_lat': 'Latitude',
       'backoffice.field_lon': 'Longitude',
       'backoffice.add_city': 'Adicionar Cidade',
+      'backoffice.export_ok': 'Exportado com sucesso', // pt
 
       // Map
       'map.title': 'Mapa Interativo',
@@ -575,6 +576,8 @@ export class I18nService {
       'favorites.savedCities': 'Saved Cities',
       'favorites.countries': 'Countries',
       'favorites.avgUv': 'Average UV Index',
+
+      'backoffice.export_ok': 'Exported successfully', // en
     },
   };
 

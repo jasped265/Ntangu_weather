@@ -1,9 +1,10 @@
 import { Component, OnDestroy, OnInit, ChangeDetectorRef } from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { WeatherService } from '../../shared/services/weather.service';
 import { User, City, WeatherAlert } from '../../shared/models/weather.model';
 import { LocationStoreService } from '../../shared/services/location-store.service';
 import { I18nService } from '../../shared/services/theme.service';
-import { Subject, takeUntil, forkJoin } from 'rxjs';
+import { Subject, takeUntil, forkJoin, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-backoffice',
@@ -16,6 +17,11 @@ export class BackofficeComponent implements OnInit, OnDestroy {
   alerts: WeatherAlert[] = [];
   loading = true;
   loadingAlerts = true;
+  exportingCSV = false;
+  exportingPDF = false;
+
+  /** Total users returned by the API — shown in the table footer */
+  totalUsers = 0;
 
   showUserModal = false;
   showCityModal = false;
@@ -26,6 +32,10 @@ export class BackofficeComponent implements OnInit, OnDestroy {
     plan: 'free' as 'free' | 'premium' | 'pro',
   };
   newCity = { name: '', country: '', lat: 0, lon: 0 };
+
+  toast = { show: false, message: '', error: false };
+
+  private readonly BASE = 'http://localhost:8000/api/v1';
   private readonly destroy$ = new Subject<void>();
 
   stats = [
@@ -61,10 +71,28 @@ export class BackofficeComponent implements OnInit, OnDestroy {
 
   constructor(
     private ws: WeatherService,
+    private http: HttpClient,
     private locationStore: LocationStoreService,
     public i18n: I18nService,
     private cdr: ChangeDetectorRef,
   ) {}
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+
+  private getToken(): string {
+    return localStorage.getItem('ntangu_access_token') || '';
+  }
+
+  private authHeaders(): HttpHeaders {
+    const token = this.getToken();
+    return new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {});
+  }
+
+  private get locale(): string {
+    return this.i18n.currentLang === 'pt' ? 'pt-AO' : 'en-GB';
+  }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     forkJoin({
@@ -74,6 +102,7 @@ export class BackofficeComponent implements OnInit, OnDestroy {
       next: ({ users, cities }) => {
         this.users = users;
         this.cities = cities;
+        this.totalUsers = users.length; // real value from API
         this.loading = false;
 
         const activeCities = cities.filter((c) => c.status === 'stable').length;
@@ -88,10 +117,9 @@ export class BackofficeComponent implements OnInit, OnDestroy {
         this.stats[1].value = activeCities.toLocaleString('pt-AO');
         this.stats[1].delta = `${cities.length} ${this.i18n.t('backoffice.total')}`;
 
-        this.stats[2].value =
-          totalSensors > 0
-            ? totalSensors.toLocaleString('pt-AO')
-            : `${cities.length} ${this.i18n.t('backoffice.city_count')}`;
+        this.stats[2].value = (
+          totalSensors > 0 ? totalSensors : cities.length
+        ).toLocaleString('pt-AO');
         this.stats[2].delta = `${activeCities} ${this.i18n.t('backoffice.stable')}`;
 
         if (cities.length > 0) {
@@ -112,11 +140,17 @@ export class BackofficeComponent implements OnInit, OnDestroy {
         if (loc?.name) this.loadAlertsForCity(loc.name);
       });
 
-    // Re-render quando a língua muda
     this.i18n.lang$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.cdr.markForCheck());
   }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // ── Alerts ────────────────────────────────────────────────────────────────
 
   private loadAlertsForCity(cityName: string): void {
     this.loadingAlerts = true;
@@ -124,11 +158,9 @@ export class BackofficeComponent implements OnInit, OnDestroy {
       next: (a) => {
         this.alerts = a;
         this.stats[3].value = a.length.toLocaleString('pt-AO');
-        this.stats[3].delta =
-          a.filter((x) => x.type === 'critical').length +
-          ` ${this.i18n.t('backoffice.critical')}`;
-        this.stats[3].deltaPositive =
-          a.filter((x) => x.type === 'critical').length === 0;
+        const critCount = a.filter((x) => x.type === 'critical').length;
+        this.stats[3].delta = `${critCount} ${this.i18n.t('backoffice.critical')}`;
+        this.stats[3].deltaPositive = critCount === 0;
         this.loadingAlerts = false;
       },
       error: () => {
@@ -137,17 +169,106 @@ export class BackofficeComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  // ── Export ────────────────────────────────────────────────────────────────
+
+  exportCSV(): void {
+    if (this.exportingCSV) return;
+    this.exportingCSV = true;
+
+    this.ws.exportGlobalCSV().subscribe({
+      next: (blob) => {
+        this.exportingCSV = false;
+        this.triggerDownload(blob, 'cidades.csv', 'text/csv');
+        this.showToast(this.i18n.t('reports.csv_ok'));
+      },
+      error: (err) => {
+        this.exportingCSV = false;
+        this.readBlobError(err, this.i18n.t('reports.csv_err'));
+      },
+    });
   }
+
+  exportPDF(): void {
+    if (this.exportingPDF) return;
+    this.exportingPDF = true;
+
+    const now = new Date();
+    const name = `Backoffice ${now.toLocaleDateString(this.locale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })} ${now.toLocaleTimeString(this.locale, { hour: '2-digit', minute: '2-digit' })}`;
+
+    // generateReport() returns Observable<number> — the report ID directly
+    this.ws
+      .generateReport(name, 'weather_summary')
+      .pipe(
+        switchMap((repId: number) => this.ws.exportReportBlob(repId, 'pdf')),
+      )
+      .subscribe({
+        next: (blob) => {
+          this.exportingPDF = false;
+          this.triggerDownload(blob, 'cidades.pdf', 'application/pdf');
+          this.showToast(`PDF ${this.i18n.t('reports.download_ok')}`);
+        },
+        error: (err) => {
+          this.exportingPDF = false;
+          this.readBlobError(
+            err,
+            `${this.i18n.t('reports.download_err')} PDF (${err.status})`,
+          );
+        },
+      });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  private triggerDownload(
+    blob: Blob,
+    filename: string,
+    mimeType: string,
+  ): void {
+    const url = window.URL.createObjectURL(
+      new Blob([blob], { type: mimeType }),
+    );
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+
+  private readBlobError(err: any, fallbackMsg: string): void {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const json = JSON.parse(reader.result as string);
+        this.showToast(json?.message || fallbackMsg, true);
+      } catch {
+        this.showToast(fallbackMsg, true);
+      }
+    };
+    if (err?.error instanceof Blob) {
+      reader.readAsText(err.error);
+    } else {
+      this.showToast(err?.error?.message || fallbackMsg, true);
+    }
+  }
+
+  private showToast(message: string, error = false): void {
+    this.toast = { show: true, message, error };
+    setTimeout(() => (this.toast = { ...this.toast, show: false }), 3500);
+  }
+
+  // ── CRUD ──────────────────────────────────────────────────────────────────
 
   deleteUser(id: string): void {
     if (confirm(this.i18n.t('backoffice.confirm_delete_user'))) {
-      this.ws
-        .deleteUser(id)
-        .subscribe(() => (this.users = this.users.filter((u) => u.id !== id)));
-      this.stats[0].value = (this.users.length - 1).toLocaleString('pt-AO');
+      this.ws.deleteUser(id).subscribe(() => {
+        this.users = this.users.filter((u) => u.id !== id);
+        this.totalUsers = this.users.length;
+        this.stats[0].value = this.users.length.toLocaleString('pt-AO');
+      });
     }
   }
 
@@ -166,6 +287,7 @@ export class BackofficeComponent implements OnInit, OnDestroy {
   addUser(): void {
     this.ws.addUser(this.newUser).subscribe((u) => {
       this.users.push(u);
+      this.totalUsers = this.users.length;
       this.stats[0].value = this.users.length.toLocaleString('pt-AO');
       this.showUserModal = false;
       this.newUser = { name: '', email: '', role: 'user', plan: 'free' };
