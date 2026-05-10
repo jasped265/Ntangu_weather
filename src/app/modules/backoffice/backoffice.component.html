@@ -1,16 +1,18 @@
 <div class="backoffice animate-in">
   <div class="page-header">
     <div>
-      <h1 class="text-headline-xl">Backoffice</h1>
-      <p class="text-body-sm text-muted">Gestão administrativa do ecossistema Ntangu.</p>
+      <h1 class="text-headline-xl">{{ i18n.t("backoffice.title") }}</h1>
+      <p class="text-body-sm text-muted">{{ i18n.t("backoffice.subtitle") }}</p>
     </div>
   </div>
 
   <!-- Stats -->
   <div class="stats-grid animate-in-1">
     <div class="stat-card glass-card glass-card-hover" *ngFor="let s of stats">
-      <span class="material-symbols-outlined stat-icon text-primary">{{ s.icon }}</span>
-      <p class="text-label text-muted">{{ s.label }}</p>
+      <span class="material-symbols-outlined stat-icon text-primary">{{
+        s.icon
+      }}</span>
+      <p class="text-label text-muted">{{ i18n.t(s.labelKey) }}</p>
       <h3 class="text-headline-xl">{{ s.value }}</h3>
       <p class="stat-delta" [class.positive]="s.deltaPositive">{{ s.delta }}</p>
     </div>
@@ -21,20 +23,27 @@
     <!-- Users -->
     <div class="glass-card users-card">
       <div class="card-header">
-        <h4 class="text-headline-md">Gerenciar Usuários</h4>
+        <h4 class="text-headline-md">
+          {{ i18n.t("backoffice.manage_users") }}
+        </h4>
         <button class="btn-primary" (click)="showUserModal = true">
-          <span class="material-symbols-outlined" style="font-size:18px">add</span> Novo Usuário
+          <span class="material-symbols-outlined" style="font-size: 18px"
+            >add</span
+          >
+          {{ i18n.t("backoffice.new_user") }}
         </button>
       </div>
       <div class="table-wrapper">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Nome</th>
-              <th>Status</th>
-              <th>Plano</th>
-              <th>Papel</th>
-              <th style="text-align:right">Ações</th>
+              <th>{{ i18n.t("backoffice.col_name") }}</th>
+              <th>{{ i18n.t("backoffice.col_status") }}</th>
+              <th>{{ i18n.t("backoffice.col_plan") }}</th>
+              <th>{{ i18n.t("backoffice.col_role") }}</th>
+              <th style="text-align: right">
+                {{ i18n.t("backoffice.col_actions") }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -43,21 +52,65 @@
                 <div class="user-row">
                   <div class="user-avatar-sm">{{ user.name[0] }}</div>
                   <div>
-                    <p style="font-weight:600">{{ user.name }}</p>
+                    <p style="font-weight: 600">{{ user.name }}</p>
                     <p class="text-body-sm text-muted">{{ user.email }}</p>
                   </div>
                 </div>
               </td>
-              <td><span class="badge" [class.badge-active]="user.status === 'active'" [class.badge-inactive]="user.status === 'inactive'">{{ user.status === 'active' ? 'Ativo' : 'Inativo' }}</span></td>
-              <td><span class="badge" [class]="'badge-' + user.plan">{{ user.plan }}</span></td>
-              <td><span class="text-label" [style.color]="user.role === 'admin' ? 'var(--tertiary)' : 'var(--on-surface-variant)'">{{ user.role }}</span></td>
-              <td style="text-align:right">
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-active]="user.status === 'active'"
+                  [class.badge-inactive]="user.status === 'inactive'"
+                >
+                  {{
+                    user.status === "active"
+                      ? i18n.t("backoffice.active")
+                      : i18n.t("backoffice.inactive")
+                  }}
+                </span>
+              </td>
+              <td>
+                <span class="badge" [class]="'badge-' + user.plan">{{
+                  user.plan
+                }}</span>
+              </td>
+              <td>
+                <span
+                  class="text-label"
+                  [style.color]="
+                    user.role === 'admin'
+                      ? 'var(--tertiary)'
+                      : 'var(--on-surface-variant)'
+                  "
+                >
+                  {{ user.role }}
+                </span>
+              </td>
+              <td style="text-align: right">
                 <div class="action-buttons">
-                  <button class="btn-icon" style="width:32px;height:32px" title="Editar">
-                    <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+                  <button
+                    class="btn-icon"
+                    style="width: 32px; height: 32px"
+                    [title]="i18n.t('common.edit')"
+                  >
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-size: 18px"
+                      >edit</span
+                    >
                   </button>
-                  <button class="btn-icon" style="width:32px;height:32px;color:var(--error)" title="Remover" (click)="deleteUser(user.id)">
-                    <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+                  <button
+                    class="btn-icon"
+                    style="width: 32px; height: 32px; color: var(--error)"
+                    [title]="i18n.t('common.delete')"
+                    (click)="deleteUser(user.id)"
+                  >
+                    <span
+                      class="material-symbols-outlined"
+                      style="font-size: 18px"
+                      >delete</span
+                    >
                   </button>
                 </div>
               </td>
@@ -66,24 +119,46 @@
         </table>
       </div>
       <div class="table-footer">
-        <p class="text-body-sm text-muted">Mostrando {{ users.length }} de 12,482 usuários</p>
+        <p class="text-body-sm text-muted">
+          {{ i18n.t("backoffice.showing") }} {{ users.length }}
+          {{ i18n.t("backoffice.of") }} 12,482 {{ i18n.t("backoffice.users") }}
+        </p>
         <div class="pagination">
-          <button class="btn-icon" style="width:34px;height:34px"><span class="material-symbols-outlined" style="font-size:18px">chevron_left</span></button>
-          <button class="btn-icon" style="width:34px;height:34px"><span class="material-symbols-outlined" style="font-size:18px">chevron_right</span></button>
+          <button class="btn-icon" style="width: 34px; height: 34px">
+            <span class="material-symbols-outlined" style="font-size: 18px"
+              >chevron_left</span
+            >
+          </button>
+          <button class="btn-icon" style="width: 34px; height: 34px">
+            <span class="material-symbols-outlined" style="font-size: 18px"
+              >chevron_right</span
+            >
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Alerts -->
     <div class="glass-card alerts-card">
-      <h4 class="text-headline-md" style="margin-bottom:16px">Alertas Recentes</h4>
+      <h4 class="text-headline-md" style="margin-bottom: 16px">
+        {{ i18n.t("backoffice.recent_alerts") }}
+      </h4>
       <div class="alert-list">
-        <div class="alert-item" *ngFor="let alert of alerts"
+        <div
+          class="alert-item"
+          *ngFor="let alert of alerts"
           [class.alert-critical]="alert.type === 'critical'"
           [class.alert-warning]="alert.type === 'warning'"
-          [class.alert-info]="alert.type === 'info'">
+          [class.alert-info]="alert.type === 'info'"
+        >
           <span class="material-symbols-outlined alert-icon">
-            {{ alert.type === 'critical' ? 'warning' : alert.type === 'warning' ? 'info' : 'circle_notifications' }}
+            {{
+              alert.type === "critical"
+                ? "warning"
+                : alert.type === "warning"
+                  ? "info"
+                  : "circle_notifications"
+            }}
           </span>
           <div>
             <p class="text-label">{{ alert.title }}</p>
@@ -98,12 +173,17 @@
   <div class="glass-card cities-section animate-in-3">
     <div class="card-header">
       <div>
-        <h4 class="text-headline-md">Cidades Monitoradas</h4>
-        <p class="text-body-sm text-muted">Gestão de thresholds e notificações por localidade.</p>
+        <h4 class="text-headline-md">
+          {{ i18n.t("backoffice.monitored_cities") }}
+        </h4>
+        <p class="text-body-sm text-muted">
+          {{ i18n.t("backoffice.cities_subtitle") }}
+        </p>
       </div>
       <div class="header-actions">
         <button class="btn-glass" (click)="showCityModal = true">
-          <span class="material-symbols-outlined">add_location</span> Nova Cidade
+          <span class="material-symbols-outlined">add_location</span>
+          {{ i18n.t("backoffice.new_city") }}
         </button>
         <button class="btn-glass">
           <span class="material-symbols-outlined">download</span>
@@ -113,44 +193,82 @@
     <div class="cities-grid">
       <div class="city-cell" *ngFor="let city of cities">
         <div class="city-top">
-          <h5 class="text-body-lg" style="font-weight:600">{{ city.name }}</h5>
-          <button class="btn-icon" style="width:28px;height:28px;color:var(--error)" (click)="deleteCity(city.id)">
-            <span class="material-symbols-outlined" style="font-size:16px">close</span>
+          <h5 class="text-body-lg" style="font-weight: 600">{{ city.name }}</h5>
+          <button
+            class="btn-icon"
+            style="width: 28px; height: 28px; color: var(--error)"
+            (click)="deleteCity(city.id)"
+          >
+            <span class="material-symbols-outlined" style="font-size: 16px"
+              >close</span
+            >
           </button>
         </div>
-        <p class="text-body-sm text-muted" style="margin-bottom:12px">{{ city.country }}</p>
+        <p class="text-body-sm text-muted" style="margin-bottom: 12px">
+          {{ city.country }}
+        </p>
         <div class="city-badges">
-          <span class="badge" [class]="'badge-' + city.plan">{{ city.plan }}</span>
-          <span class="badge" [class]="'badge-' + city.status">{{ city.status }}</span>
+          <span class="badge" [class]="'badge-' + city.plan">{{
+            city.plan
+          }}</span>
+          <span class="badge" [class]="'badge-' + city.status">{{
+            city.status
+          }}</span>
         </div>
-        <p class="text-label text-muted" style="margin-top:10px">{{ city.sensors }} sensores</p>
+        <p class="text-label text-muted" style="margin-top: 10px">
+          {{ city.sensors }} {{ i18n.t("backoffice.sensors") }}
+        </p>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Add User Modal -->
-<div class="modal-overlay" *ngIf="showUserModal" (click)="showUserModal = false">
+<div
+  class="modal-overlay"
+  *ngIf="showUserModal"
+  (click)="showUserModal = false"
+>
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <h3 class="text-headline-md" style="margin-bottom:20px">Novo Usuário</h3>
+    <h3 class="text-headline-md" style="margin-bottom: 20px">
+      {{ i18n.t("backoffice.new_user") }}
+    </h3>
     <div class="modal-form">
       <div class="field-group">
-        <label class="text-label text-muted">Nome</label>
-        <input class="input-glass" type="text" [(ngModel)]="newUser.name" placeholder="Nome completo"/>
+        <label class="text-label text-muted">{{
+          i18n.t("backoffice.field_name")
+        }}</label>
+        <input
+          class="input-glass"
+          type="text"
+          [(ngModel)]="newUser.name"
+          [placeholder]="i18n.t('backoffice.field_name_ph')"
+        />
       </div>
       <div class="field-group">
-        <label class="text-label text-muted">E-mail</label>
-        <input class="input-glass" type="email" [(ngModel)]="newUser.email" placeholder="email@exemplo.com"/>
+        <label class="text-label text-muted">{{
+          i18n.t("backoffice.field_email")
+        }}</label>
+        <input
+          class="input-glass"
+          type="email"
+          [(ngModel)]="newUser.email"
+          placeholder="email@exemplo.com"
+        />
       </div>
       <div class="field-group">
-        <label class="text-label text-muted">Papel</label>
+        <label class="text-label text-muted">{{
+          i18n.t("backoffice.field_role")
+        }}</label>
         <select class="input-glass" [(ngModel)]="newUser.role">
-          <option value="user">Usuário</option>
-          <option value="admin">Administrador</option>
+          <option value="user">{{ i18n.t("backoffice.role_user") }}</option>
+          <option value="admin">{{ i18n.t("backoffice.role_admin") }}</option>
         </select>
       </div>
       <div class="field-group">
-        <label class="text-label text-muted">Plano</label>
+        <label class="text-label text-muted">{{
+          i18n.t("backoffice.field_plan")
+        }}</label>
         <select class="input-glass" [(ngModel)]="newUser.plan">
           <option value="free">Free</option>
           <option value="premium">Premium</option>
@@ -159,39 +277,81 @@
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-glass" (click)="showUserModal = false">Cancelar</button>
-      <button class="btn-primary" (click)="addUser()">Criar Usuário</button>
+      <button class="btn-glass" (click)="showUserModal = false">
+        {{ i18n.t("common.cancel") }}
+      </button>
+      <button class="btn-primary" (click)="addUser()">
+        {{ i18n.t("backoffice.create_user") }}
+      </button>
     </div>
   </div>
 </div>
 
 <!-- Add City Modal -->
-<div class="modal-overlay" *ngIf="showCityModal" (click)="showCityModal = false">
+<div
+  class="modal-overlay"
+  *ngIf="showCityModal"
+  (click)="showCityModal = false"
+>
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <h3 class="text-headline-md" style="margin-bottom:20px">Nova Cidade</h3>
+    <h3 class="text-headline-md" style="margin-bottom: 20px">
+      {{ i18n.t("backoffice.new_city") }}
+    </h3>
     <div class="modal-form">
       <div class="field-group">
-        <label class="text-label text-muted">Nome da Cidade</label>
-        <input class="input-glass" type="text" [(ngModel)]="newCity.name" placeholder="Ex: Benguela"/>
+        <label class="text-label text-muted">{{
+          i18n.t("backoffice.field_city_name")
+        }}</label>
+        <input
+          class="input-glass"
+          type="text"
+          [(ngModel)]="newCity.name"
+          placeholder="Ex: Benguela"
+        />
       </div>
       <div class="field-group">
-        <label class="text-label text-muted">País</label>
-        <input class="input-glass" type="text" [(ngModel)]="newCity.country" placeholder="Ex: Angola"/>
+        <label class="text-label text-muted">{{
+          i18n.t("backoffice.field_country")
+        }}</label>
+        <input
+          class="input-glass"
+          type="text"
+          [(ngModel)]="newCity.country"
+          placeholder="Ex: Angola"
+        />
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px">
         <div class="field-group">
-          <label class="text-label text-muted">Latitude</label>
-          <input class="input-glass" type="number" [(ngModel)]="newCity.lat" placeholder="-12.578"/>
+          <label class="text-label text-muted">{{
+            i18n.t("backoffice.field_lat")
+          }}</label>
+          <input
+            class="input-glass"
+            type="number"
+            [(ngModel)]="newCity.lat"
+            placeholder="-12.578"
+          />
         </div>
         <div class="field-group">
-          <label class="text-label text-muted">Longitude</label>
-          <input class="input-glass" type="number" [(ngModel)]="newCity.lon" placeholder="13.41"/>
+          <label class="text-label text-muted">{{
+            i18n.t("backoffice.field_lon")
+          }}</label>
+          <input
+            class="input-glass"
+            type="number"
+            [(ngModel)]="newCity.lon"
+            placeholder="13.41"
+          />
         </div>
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-glass" (click)="showCityModal = false">Cancelar</button>
-      <button class="btn-primary" (click)="addCity()">Adicionar Cidade</button>
+      <button class="btn-glass" (click)="showCityModal = false">
+        {{ i18n.t("common.cancel") }}
+      </button>
+      <button class="btn-primary" (click)="addCity()">
+        {{ i18n.t("backoffice.add_city") }}
+      </button>
     </div>
   </div>
 </div>

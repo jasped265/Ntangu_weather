@@ -6,7 +6,7 @@
     </div>
     <div>
       <h1 class="brand-name">Ntangu</h1>
-      <p class="brand-tagline">{{ i18n.t('nav.dashboard') === 'Dashboard' ? 'Atmospheric Intelligence' : 'Inteligência Atmosférica' }}</p>
+      <p class="brand-tagline">{{ i18n.t("brand.tagline") }}</p>
     </div>
   </div>
 
@@ -18,7 +18,11 @@
       [class.active]="isActive(item.route)"
       [routerLink]="item.route"
     >
-      <span class="material-symbols-outlined" [class.icon-fill]="isActive(item.route)">{{ item.icon }}</span>
+      <span
+        class="material-symbols-outlined"
+        [class.icon-fill]="isActive(item.route)"
+        >{{ item.icon }}</span
+      >
       <span class="nav-label">{{ i18n.t(item.label) }}</span>
     </a>
   </nav>
@@ -28,19 +32,37 @@
     <div class="user-card glass-card">
       <div class="user-info">
         <div class="user-avatar">
-          <span class="material-symbols-outlined icon-fill">account_circle</span>
+          <span class="material-symbols-outlined icon-fill"
+            >account_circle</span
+          >
         </div>
         <div class="user-details">
           <p class="user-name">{{ auth.currentUser?.name }}</p>
-          <p class="user-role">{{ auth.currentUser?.role === 'admin' ? 'Administrador' : 'Usuário' }}</p>
+          <p class="user-role">
+            {{
+              i18n.t(
+                auth.currentUser?.role === "admin"
+                  ? "sidebar.roleAdmin"
+                  : "sidebar.roleUser"
+              )
+            }}
+          </p>
         </div>
       </div>
-      <button class="btn-primary w-full" style="justify-content: center; margin-top: 12px;" routerLink="/settings">
-        Upgrade to Pro
+
+      <!-- Upgrade to Pro — only non-admins -->
+      <button
+        *ngIf="!auth.isAdmin()"
+        class="btn-primary w-full"
+        style="justify-content: center; margin-top: 12px"
+        routerLink="/settings"
+      >
+        {{ i18n.t("sidebar.upgradePro") }}
       </button>
+
       <button class="logout-btn" (click)="logout()">
         <span class="material-symbols-outlined">logout</span>
-        Sair
+        {{ i18n.t("sidebar.logout") }}
       </button>
     </div>
   </div>

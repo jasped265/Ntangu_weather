@@ -2,10 +2,8 @@
   <!-- Header -->
   <div class="history-header">
     <div class="header-left">
-      <h1 class="text-headline-xl">Dados Históricos</h1>
-      <p class="text-body-sm text-muted">
-        Padrões climáticos reais via Open-Meteo
-      </p>
+      <h1 class="text-headline-xl">{{ i18n.t("history.title") }}</h1>
+      <p class="text-body-sm text-muted">{{ i18n.t("history.subtitle") }}</p>
     </div>
 
     <!-- City selector -->
@@ -71,42 +69,52 @@
   >
     <span class="material-symbols-outlined error-icon">cloud_off</span>
     <div>
-      <p class="text-body-lg">Não foi possível carregar os dados</p>
-      <p class="text-body-sm text-muted">Verifica a tua ligação à internet</p>
+      <p class="text-body-lg">{{ i18n.t("history.error_title") }}</p>
+      <p class="text-body-sm text-muted">{{ i18n.t("history.error_sub") }}</p>
     </div>
     <button class="btn-primary" (click)="retry()">
       <span class="material-symbols-outlined">refresh</span>
-      Tentar novamente
+      {{ i18n.t("common.retry") }}
     </button>
   </div>
 
   <!-- Stats row -->
   <div class="stats-row animate-in-2" *ngIf="!hasError">
     <div class="stat-card glass-card">
-      <span class="stat-label text-label text-muted">Máxima</span>
+      <span class="stat-label text-label text-muted">{{
+        i18n.t("history.stat_max")
+      }}</span>
       <span class="stat-value text-data"
-        >{{ stats.max }}<small>{{ currentTab.unit }}</small></span
+        >{{ stats.max }}<small>{{ currentUnit }}</small></span
       >
     </div>
     <div class="stat-card glass-card">
-      <span class="stat-label text-label text-muted">Mínima</span>
+      <span class="stat-label text-label text-muted">{{
+        i18n.t("history.stat_min")
+      }}</span>
       <span class="stat-value text-data"
-        >{{ stats.min }}<small>{{ currentTab.unit }}</small></span
+        >{{ stats.min }}<small>{{ currentUnit }}</small></span
       >
     </div>
     <div class="stat-card glass-card">
-      <span class="stat-label text-label text-muted">Média</span>
+      <span class="stat-label text-label text-muted">{{
+        i18n.t("history.stat_avg")
+      }}</span>
       <span class="stat-value text-data"
-        >{{ stats.avg }}<small>{{ currentTab.unit }}</small></span
+        >{{ stats.avg }}<small>{{ currentUnit }}</small></span
       >
     </div>
     <div class="stat-card glass-card">
       <span class="stat-label text-label text-muted">
-        {{ activeTab === "chuva" ? "Total" : "Amplitude" }}
+        {{
+          activeTab === "chuva"
+            ? i18n.t("history.stat_total")
+            : i18n.t("history.stat_range")
+        }}
       </span>
       <span class="stat-value text-data">
         {{ activeTab === "chuva" ? stats.total : stats.max - stats.min
-        }}<small>{{ currentTab.unit }}</small>
+        }}<small>{{ currentUnit }}</small>
       </span>
     </div>
   </div>
@@ -127,8 +135,8 @@
       <div class="chart-meta text-muted" style="font-size: 12px">
         {{
           activeRange === "1a" || activeRange === "5a"
-            ? "Médias mensais"
-            : "Dados diários"
+            ? i18n.t("history.monthly_avg")
+            : i18n.t("history.daily_data")
         }}
       </div>
     </div>
@@ -137,7 +145,9 @@
       <div class="loading-overlay" *ngIf="isLoading">
         <div class="loading-spinner">
           <span class="material-symbols-outlined animate-pulse">history</span>
-          <span class="text-muted text-body-sm">A carregar dados reais...</span>
+          <span class="text-muted text-body-sm">{{
+            i18n.t("history.loading_data")
+          }}</span>
         </div>
       </div>
       <canvas #tempCanvas></canvas>
@@ -153,7 +163,9 @@
       monthlyData.length
     "
   >
-    <h2 class="section-title text-headline-md">Resumo Mensal</h2>
+    <h2 class="section-title text-headline-md">
+      {{ i18n.t("history.monthly_summary") }}
+    </h2>
     <div class="monthly-grid">
       <div
         class="month-card glass-card glass-card-hover"
@@ -168,7 +180,7 @@
               >thermostat</span
             >
             <span class="text-data" style="font-size: 16px"
-              >{{ m.avgTemp }}°</span
+              >{{ units.convert(m.avgTemp) }}{{ units.symbol }}</span
             >
           </div>
           <div class="month-metric" *ngIf="activeTab === 'chuva'">
@@ -231,22 +243,25 @@
     "
   >
     <div class="table-header-row">
-      <h2 class="section-title text-headline-md">Dados Diários</h2>
+      <h2 class="section-title text-headline-md">
+        {{ i18n.t("history.daily_title") }}
+      </h2>
       <span class="text-muted text-body-sm"
-        >{{ dailyData.length }} registos — Open-Meteo</span
+        >{{ dailyData.length }} {{ i18n.t("history.records") }} —
+        Open-Meteo</span
       >
     </div>
     <div class="table-scroll">
       <table class="data-table history-table">
         <thead>
           <tr>
-            <th>Data</th>
-            <th>Condição</th>
-            <th>Temp. Máx</th>
-            <th>Temp. Mín</th>
-            <th>Humidade</th>
-            <th>Precipitação</th>
-            <th>Vento</th>
+            <th>{{ i18n.t("history.col_date") }}</th>
+            <th>{{ i18n.t("history.col_condition") }}</th>
+            <th>{{ i18n.t("history.col_temp_max") }}</th>
+            <th>{{ i18n.t("history.col_temp_min") }}</th>
+            <th>{{ i18n.t("weather.humidity") }}</th>
+            <th>{{ i18n.t("history.col_rain") }}</th>
+            <th>{{ i18n.t("weather.wind") }}</th>
           </tr>
         </thead>
         <tbody>
@@ -266,10 +281,14 @@
               </div>
             </td>
             <td>
-              <span class="value-badge temp-max">{{ d.tempMax }}°C</span>
+              <span class="value-badge temp-max"
+                >{{ units.convert(d.tempMax) }}{{ units.symbol }}</span
+              >
             </td>
             <td>
-              <span class="value-badge temp-min">{{ d.tempMin }}°C</span>
+              <span class="value-badge temp-min"
+                >{{ units.convert(d.tempMin) }}{{ units.symbol }}</span
+              >
             </td>
             <td>
               <div class="bar-cell">

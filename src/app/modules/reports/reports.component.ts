@@ -1,16 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import {
   WeatherService,
   ReportSummary,
 } from '../../shared/services/weather.service';
+import { I18nService } from '../../shared/services/theme.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-reports',
   templateUrl: './reports.component.html',
   styleUrls: ['./reports.component.scss'],
 })
-export class ReportsComponent implements OnInit {
+export class ReportsComponent implements OnInit, OnDestroy {
   summary: ReportSummary | null = null;
   reports: any[] = [];
   loading = true;
@@ -19,17 +21,15 @@ export class ReportsComponent implements OnInit {
 
   toast = { show: false, message: '', error: false };
 
-  // FIX: BASE apenas necessário para endpoints de blob (export/download)
-  // que não estão cobertos pelo WeatherService
   private readonly BASE = 'http://localhost:8000/api/v1';
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private ws: WeatherService,
     private http: HttpClient,
+    public i18n: I18nService,
+    private cdr: ChangeDetectorRef,
   ) {}
-
-  // ── Auth token ────────────────────────────────────────────────────────────
-  // FIX: Unificado com a mesma chave usada no WeatherService ('ntangu_access_token')
 
   private getToken(): string {
     return localStorage.getItem('ntangu_access_token') || '';
@@ -40,11 +40,19 @@ export class ReportsComponent implements OnInit {
     return new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {});
   }
 
-  // ── Init ──────────────────────────────────────────────────────────────────
-
   ngOnInit(): void {
     this.ws.getReportsSummary().subscribe((s) => (this.summary = s));
     this.loadReports();
+
+    // Re-render quando a língua muda
+    this.i18n.lang$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.cdr.markForCheck());
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private loadReports(): void {
@@ -60,20 +68,42 @@ export class ReportsComponent implements OnInit {
     });
   }
 
-  // ── Gerar relatório ───────────────────────────────────────────────────────
-  // FIX: Usa ws.generateReport() em vez de chamada HTTP direta,
-  //      garantindo token correto e endpoint correto (/reports/generate)
+  /** Locale BCP-47 derivado da língua atual do i18n */
+  private get locale(): string {
+    return this.i18n.currentLang === 'pt' ? 'pt-AO' : 'en-GB';
+  }
+
+  /** Título traduzido + data formatada para um relatório (computed na render) */
+  reportTitle(rep: any): string {
+    const date = new Date(rep.created_at);
+    const datePart = date.toLocaleDateString(this.locale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+    const timePart = date.toLocaleTimeString(this.locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    return `${this.i18n.t('reports.itemTitle')} ${datePart} ${timePart}`;
+  }
+
+  /** Tipo do relatório traduzido (cai para o valor cru se a chave faltar) */
+  reportType(rep: any): string {
+    const key = `reports.types.${String(rep?.type || '').toLowerCase()}`;
+    const translated = this.i18n.t(key);
+    return translated === key ? rep.type : translated;
+  }
 
   generate(): void {
     if (this.generating) return;
     this.generating = true;
 
     const now = new Date();
-    const name = `Relatorio ${now.toLocaleDateString('pt-AO', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    })} ${now.toLocaleTimeString('pt-AO', {
+    const name = `${this.i18n.t('reports.itemTitle')} ${now.toLocaleDateString(
+      this.locale,
+      { day: '2-digit', month: '2-digit', year: 'numeric' },
+    )} ${now.toLocaleTimeString(this.locale, {
       hour: '2-digit',
       minute: '2-digit',
     })}`;
@@ -81,67 +111,84 @@ export class ReportsComponent implements OnInit {
     this.ws.generateReport(name, 'weather_summary').subscribe({
       next: () => {
         this.generating = false;
-        this.showToast('Relatório gerado com sucesso');
+        this.showToast(this.i18n.t('reports.generated_ok'));
         this.loadReports();
       },
       error: (err) => {
         this.generating = false;
-        const msg = err?.error?.message || 'Erro ao gerar relatório';
+        const msg = err?.error?.message || this.i18n.t('reports.generated_err');
         this.showToast(msg, true);
       },
     });
   }
 
-  // ── Exportar CSV global ───────────────────────────────────────────────────
-  // FIX: authHeaders() agora usa o token correto ('ntangu_access_token')
-
   exportGlobalCSV(): void {
     if (this.exporting) return;
     this.exporting = true;
 
+    const csvUrl = `${this.BASE}/reports/export/csv?type=cities`;
+
     this.http
-      .get(`${this.BASE}/reports/export/csv?type=cities`, {
+      .get(csvUrl, {
         headers: this.authHeaders(),
         responseType: 'blob',
+        observe: 'response',
       })
       .subscribe({
-        next: (blob) => {
+        next: (response) => {
           this.exporting = false;
-          this.triggerDownload(blob, 'relatorio-cidades.csv', 'text/csv');
-          this.showToast('CSV exportado com sucesso');
+          this.triggerDownload(
+            response.body!,
+            'relatorio-cidades.csv',
+            'text/csv',
+          );
+          this.showToast(this.i18n.t('reports.csv_ok'));
         },
         error: (err) => {
           this.exporting = false;
-          this.readBlobError(err, 'Erro ao exportar CSV');
+          this.readBlobError(err, this.i18n.t('reports.csv_err'));
         },
       });
   }
 
-  // ── Download por relatório (CSV ou PDF) ───────────────────────────────────
-  // FIX: authHeaders() agora usa o token correto ('ntangu_access_token')
-
   downloadReport(rep: any, format: 'csv' | 'pdf'): void {
-    const url = `${this.BASE}/reports/${rep.id}/export/${format}`;
+    const repId = rep?.id ?? rep?.report_id ?? rep?.uuid;
+    if (!repId) {
+      this.showToast(this.i18n.t('reports.id_err'), true);
+      return;
+    }
+
+    const url = `${this.BASE}/reports/${repId}/export/${format}`;
     const mimeType = format === 'csv' ? 'text/csv' : 'application/pdf';
-    const filename = `${rep.name.replace(/\s+/g, '-')}.${format}`;
+    // Nome de ficheiro baseado no título traduzido (em vez do rep.name persistido)
+    const safeName = this.reportTitle(rep)
+      .replace(/[^a-zA-Z0-9_\-. ]/g, '')
+      .replace(/\s+/g, '-');
+    const filename = `${safeName}.${format}`;
 
     this.http
       .get(url, {
         headers: this.authHeaders(),
         responseType: 'blob',
+        observe: 'response',
       })
       .subscribe({
-        next: (blob) => {
+        next: (response) => {
+          const blob = response.body!;
           this.triggerDownload(blob, filename, mimeType);
-          this.showToast(`${format.toUpperCase()} descarregado`);
+          this.showToast(
+            `${format.toUpperCase()} ${this.i18n.t('reports.download_ok')}`,
+          );
         },
         error: (err) => {
-          this.readBlobError(err, `Erro ao exportar ${format.toUpperCase()}`);
+          console.error('[downloadReport] Erro:', err.status, url);
+          this.readBlobError(
+            err,
+            `${this.i18n.t('reports.download_err')} ${format.toUpperCase()} (${err.status})`,
+          );
         },
       });
   }
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
 
   private triggerDownload(
     blob: Blob,
@@ -158,7 +205,6 @@ export class ReportsComponent implements OnInit {
     window.URL.revokeObjectURL(url);
   }
 
-  // FIX: Extraído método reutilizável para ler erros de blob JSON
   private readBlobError(err: any, fallbackMsg: string): void {
     const reader = new FileReader();
     reader.onload = () => {

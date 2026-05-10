@@ -81,7 +81,9 @@ export class WeatherService {
       .pipe(
         map((res) =>
           res.data.map((d) => ({
-            day: this.formatDayLabel(d.day),
+            // Guardamos a data ISO (ex: "2026-05-11") em vez da string formatada.
+            // O dashboard usa getDayLabel(index) para traduzir corretamente.
+            day: d.day ?? '',
             high: Number(d.high ?? 0),
             low: Number(d.low ?? 0),
             condition: d.condition ?? '',

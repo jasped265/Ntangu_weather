@@ -1,10 +1,16 @@
-import { AfterViewInit, Component, OnDestroy } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  OnDestroy,
+  ChangeDetectorRef,
+} from '@angular/core';
 import * as L from 'leaflet';
 import {
   WeatherService,
   MapMarker,
 } from '../../shared/services/weather.service';
 import { LocationStoreService } from '../../shared/services/location-store.service';
+import { I18nService, UnitsService } from '../../shared/services/theme.service';
 import { Subject, takeUntil } from 'rxjs';
 import { WeatherData } from '../../shared/models/weather.model';
 
@@ -19,28 +25,28 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   layers = [
     {
       id: 'wind',
-      label: 'Partículas de Vento',
+      labelKey: 'map.layer_wind',
       icon: 'air',
       active: true,
       color: 'var(--primary)',
     },
     {
       id: 'temp',
-      label: 'Temperatura',
+      labelKey: 'map.layer_temp',
       icon: 'thermostat',
       active: false,
       color: 'var(--tertiary)',
     },
     {
       id: 'rain',
-      label: 'Precipitação',
+      labelKey: 'map.layer_rain',
       icon: 'rainy',
       active: false,
       color: 'var(--secondary)',
     },
     {
       id: 'cloud',
-      label: 'Cobertura de Nuvens',
+      labelKey: 'map.layer_cloud',
       icon: 'cloud',
       active: false,
       color: 'var(--on-surface-variant)',
@@ -48,7 +54,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   ];
 
   selectedTime = '18:00';
-  times = ['Agora', '12:00', '15:00', '18:00', '21:00', '00:00', '03:00'];
+  times = ['18:00', '12:00', '15:00', '18:00', '21:00', '00:00', '03:00'];
   precision = 75;
 
   markers: MapMarker[] = [];
@@ -72,13 +78,25 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   constructor(
     private weather: WeatherService,
     private locationStore: LocationStoreService,
-  ) {}
+    public i18n: I18nService,
+    public units: UnitsService,
+    private cdr: ChangeDetectorRef,
+  ) {
+    // Inicializar aqui garante que i18n já está injetado —
+    // evita que o campo comece como '' e mude no primeiro check (NG0100).
+    this.currentDayLabel = this.computeDayLabel(this.i18n.currentLang);
+  }
 
   ngAfterViewInit(): void {
     this.initMap();
     this.loadMarkers();
-    this.updateDayLabel();
-    this.seekToCurrentTime();
+
+    // FIX NG0100: adiar mutações de estado para fora do ciclo AfterViewInit
+    setTimeout(() => {
+      this.updateDayLabel();
+      this.seekToCurrentTime();
+      this.cdr.detectChanges();
+    }, 0);
 
     this.locationStore.selected$
       .pipe(takeUntil(this.destroy$))
@@ -95,6 +113,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
               this.map.removeLayer(this.searchPin);
             }
 
+            const tempDisplay = `${this.units.convert(Math.round(w.temperature))}${this.units.symbol}`;
+
             this.searchPin = L.marker([w.lat, w.lon], {
               icon: L.divIcon({
                 className: '',
@@ -110,7 +130,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
                       border-radius:20px;
                       white-space:nowrap;
                       box-shadow:0 2px 12px rgba(0,0,0,0.4);
-                    ">${w.city}, ${w.country} · ${Math.round(w.temperature)}°C</div>
+                    ">${w.city}, ${w.country} · ${tempDisplay}</div>
                     <div style="width:2px;height:12px;background:var(--primary,#bec5e4);"></div>
                     <div style="
                       width:12px;height:12px;border-radius:50%;
@@ -141,6 +161,16 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         );
         if (found) this.focusMarker(found, false);
       });
+
+    this.units.unit$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.renderMarkers();
+      this.cdr.markForCheck();
+    });
+
+    this.i18n.lang$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.updateDayLabel();
+      this.cdr.markForCheck();
+    });
   }
 
   ngOnDestroy(): void {
@@ -225,18 +255,38 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     this.seekToIndex(index);
   }
 
-  private updateDayLabel(): void {
+  // Método puro — não depende de `this.i18n` para poder ser chamado
+  // na inicialização do campo (antes do constructor injetar os serviços).
+  // Para reatividade usa updateDayLabel() que chama este método.
+  computeDayLabel(lang?: string): string {
     const now = new Date();
-    const days = [
-      'DOMINGO',
-      'SEGUNDA-FEIRA',
-      'TERÇA-FEIRA',
-      'QUARTA-FEIRA',
-      'QUINTA-FEIRA',
-      'SEXTA-FEIRA',
-      'SÁBADO',
-    ];
-    this.currentDayLabel = days[now.getDay()];
+    const useLang =
+      lang ?? (typeof this.i18n !== 'undefined' ? this.i18n.currentLang : 'pt');
+    const days =
+      useLang === 'en'
+        ? [
+            'SUNDAY',
+            'MONDAY',
+            'TUESDAY',
+            'WEDNESDAY',
+            'THURSDAY',
+            'FRIDAY',
+            'SATURDAY',
+          ]
+        : [
+            'DOMINGO',
+            'SEGUNDA-FEIRA',
+            'TERÇA-FEIRA',
+            'QUARTA-FEIRA',
+            'QUINTA-FEIRA',
+            'SEXTA-FEIRA',
+            'SÁBADO',
+          ];
+    return days[now.getDay()];
+  }
+
+  private updateDayLabel(): void {
+    this.currentDayLabel = this.computeDayLabel(this.i18n.currentLang);
   }
 
   private seekToCurrentTime(): void {
@@ -247,11 +297,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     let closestIndex = 0;
     let smallestDiff = Infinity;
     this.times.forEach((t, i) => {
-      if (t === 'Agora') {
-        closestIndex = 0;
-        smallestDiff = 0;
-        return;
-      }
       const [h, m] = t.split(':').map(Number);
       const diff = Math.abs(
         currentHour * 60 + currentMinutes - (h * 60 + (m || 0)),
@@ -355,8 +400,11 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
       circle.on('click', () => this.focusMarker(m, true));
 
-      const label = `${m.name}${temp !== null ? ` · ${Math.round(temp)}°C` : ''}`;
-      circle.bindPopup(label, { closeButton: false });
+      const tempLabel =
+        temp !== null
+          ? ` · ${this.units.convert(Math.round(temp))}${this.units.symbol}`
+          : '';
+      circle.bindPopup(`${m.name}${tempLabel}`, { closeButton: false });
       circle.addTo(this.markerLayer);
 
       if (this.isLayerActive('wind') && m.wind_kph != null && m.wind_dir) {

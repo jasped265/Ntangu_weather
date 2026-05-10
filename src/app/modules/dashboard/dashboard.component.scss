@@ -124,59 +124,6 @@
   box-sizing: border-box;
 }
 
-.map-svg-container {
-  width: 100%;
-  height: 100%;
-  min-height: 320px;
-}
-
-.map-svg {
-  width: 100%;
-  height: 100%;
-  min-height: 320px;
-}
-
-.map-overlay-ui {
-  position: absolute;
-  inset: 0;
-  z-index: 10;
-  pointer-events: none;
-
-  > * {
-    pointer-events: all;
-  }
-}
-
-.map-top-controls {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.map-live-badge {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: 100px;
-  padding: 6px 14px;
-}
-
-.live-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--primary);
-}
-
 /* Metrics */
 .metrics-grid {
   display: grid;
@@ -299,10 +246,11 @@
   gap: 4px;
 }
 
+/* FIX: day label was too narrow (36px) causing icon overlap */
 .daily-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 10px 8px;
   border-radius: 10px;
   transition: background 0.2s;
@@ -313,17 +261,23 @@
 }
 
 .day-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--on-surface);
-  width: 36px;
+  /* Wide enough for longest day name in PT (SEX) or EN (WED) as 3-letter abbrev */
+  width: 40px;
   flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .daily-icon {
   font-size: 20px;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Prevent icon from being pushed onto text */
+  width: 24px;
+  text-align: center;
 }
 
 .daily-range {

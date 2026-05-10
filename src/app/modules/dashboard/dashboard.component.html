@@ -1,23 +1,31 @@
 <div class="dashboard animate-in" *ngIf="!loading; else loadingTpl">
-
   <!-- Hero Row: Current Weather + Map -->
   <div class="hero-grid">
-
     <!-- Current Weather Card -->
     <div class="weather-hero glass-card animate-in-1">
       <div class="weather-top">
         <div>
           <h1 class="city-name">{{ weather.city }}</h1>
-          <p class="city-sub text-muted">{{ weather.country }} · {{ weather.timestamp | date:'EEEE, d MMMM' }}</p>
+          <p class="city-sub text-muted">
+            {{ weather.country }} ·
+            {{ weather.timestamp | date: "EEEE, d MMMM" }}
+          </p>
         </div>
-        <span class="material-symbols-outlined icon-fill weather-icon">{{ weather.conditionIcon }}</span>
+        <span class="material-symbols-outlined icon-fill weather-icon">{{
+          weather.conditionIcon
+        }}</span>
       </div>
 
       <div class="temp-display">
-        <span class="temp-number">{{ weather.temperature }}°</span>
+        <span class="temp-number"
+          >{{ units.convert(weather.temperature) }}°</span
+        >
         <div class="temp-meta">
           <p class="condition-label text-primary">{{ weather.condition }}</p>
-          <p class="feels-like text-muted">Sensação {{ weather.feelsLike }}°</p>
+          <p class="feels-like text-muted">
+            {{ i18n.t("weather.feels_like") }}
+            {{ units.convert(weather.feelsLike) }}{{ units.symbol }}
+          </p>
         </div>
       </div>
 
@@ -25,64 +33,108 @@
 
       <div class="hi-lo">
         <div>
-          <span class="text-label text-muted">Mín</span>
-          <span class="text-data text-primary">{{ weather.low }}°</span>
+          <span class="text-label text-muted">{{ i18n.t("weather.low") }}</span>
+          <span class="text-data text-primary"
+            >{{ units.convert(weather.low) }}{{ units.symbol }}</span
+          >
         </div>
         <div>
-          <span class="text-label text-muted">Máx</span>
-          <span class="text-data text-primary">{{ weather.high }}°</span>
+          <span class="text-label text-muted">{{
+            i18n.t("weather.high")
+          }}</span>
+          <span class="text-data text-primary"
+            >{{ units.convert(weather.high) }}{{ units.symbol }}</span
+          >
         </div>
       </div>
 
-      <!-- Background decoration -->
       <div class="weather-bg-blob"></div>
     </div>
 
     <!-- Location Sync Card -->
     <div class="map-preview glass-card animate-in-2">
-      <div class="map-placeholder" style="padding:24px;display:flex;flex-direction:column;justify-content:space-between">
+      <div
+        class="map-placeholder"
+        style="
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        "
+      >
         <div>
-          <p class="text-label text-primary">Mapa conectado</p>
-          <h3 class="text-headline-md" style="margin-top:8px">{{ weather.city }}, {{ weather.country }}</h3>
-          <p class="text-body-sm text-muted" style="margin-top:8px">
-            Coordenadas: {{ weather.lat | number:'1.2-2' }}, {{ weather.lon | number:'1.2-2' }}
+          <p class="text-label text-primary">
+            {{ i18n.t("dashboard.mapConnected") }}
+          </p>
+          <h3 class="text-headline-md" style="margin-top: 8px">
+            {{ weather.city }}, {{ weather.country }}
+          </h3>
+          <p class="text-body-sm text-muted" style="margin-top: 8px">
+            {{ i18n.t("dashboard.coordinates") }}:
+            {{ weather.lat | number: "1.2-2" }},
+            {{ weather.lon | number: "1.2-2" }}
           </p>
         </div>
         <div>
-          <p class="text-body-sm text-muted">Use o mapa para selecionar outra localização e atualizar toda a UI em tempo real.</p>
-          <a routerLink="/map" class="btn-primary" style="margin-top:12px;display:inline-flex;text-decoration:none">
-            <span class="material-symbols-outlined" style="font-size:18px">map</span>
-            Abrir mapa funcional
+          <p class="text-body-sm text-muted">
+            {{ i18n.t("dashboard.mapDesc") }}
+          </p>
+          <a
+            routerLink="/map"
+            class="btn-primary"
+            style="
+              margin-top: 12px;
+              display: inline-flex;
+              text-decoration: none;
+            "
+          >
+            <span class="material-symbols-outlined" style="font-size: 18px"
+              >map</span
+            >
+            {{ i18n.t("dashboard.openMap") }}
           </a>
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- Metrics Grid -->
   <div class="metrics-grid animate-in-2">
-
     <div class="metric-card glass-card glass-card-hover">
       <div class="metric-header">
-        <span class="material-symbols-outlined text-primary">humidity_percentage</span>
-        <span class="text-label text-muted">Humidade</span>
+        <span class="material-symbols-outlined text-primary"
+          >humidity_percentage</span
+        >
+        <span class="text-label text-muted">{{
+          i18n.t("weather.humidity")
+        }}</span>
       </div>
-      <div class="metric-value">{{ weather.humidity }}<span class="metric-unit">%</span></div>
+      <div class="metric-value">
+        {{ weather.humidity }}<span class="metric-unit">%</span>
+      </div>
       <div class="progress-bar">
         <div class="progress-fill" [style.width]="weather.humidity + '%'"></div>
       </div>
-      <p class="metric-note text-muted">Ponto de orvalho {{ weather.temperature - 8 }}°</p>
+      <p class="metric-note text-muted">
+        {{ i18n.t("dashboard.dewPoint") }}
+        {{ units.convert(weather.temperature - 8) }}{{ units.symbol }}
+      </p>
     </div>
 
     <div class="metric-card glass-card glass-card-hover">
       <div class="metric-header">
         <span class="material-symbols-outlined text-primary">air</span>
-        <span class="text-label text-muted">Vento</span>
+        <span class="text-label text-muted">{{ i18n.t("weather.wind") }}</span>
       </div>
-      <div class="metric-value">{{ weather.windSpeed }}<span class="metric-unit">km/h</span></div>
+      <div class="metric-value">
+        {{ weather.windSpeed }}<span class="metric-unit">km/h</span>
+      </div>
       <div class="metric-icon-row">
-        <span class="material-symbols-outlined text-muted" style="font-size:18px;transform:rotate(45deg)">navigation</span>
+        <span
+          class="material-symbols-outlined text-muted"
+          style="font-size: 18px; transform: rotate(45deg)"
+          >navigation</span
+        >
         <span class="text-body-sm text-muted">{{ weather.windDirection }}</span>
       </div>
     </div>
@@ -90,11 +142,20 @@
     <div class="metric-card glass-card glass-card-hover">
       <div class="metric-header">
         <span class="material-symbols-outlined text-tertiary">wb_sunny</span>
-        <span class="text-label text-muted">Índice UV</span>
+        <span class="text-label text-muted">{{ i18n.t("weather.uv") }}</span>
       </div>
-      <div class="metric-value" [style.color]="getMetricColor(weather.uvIndex, 'uv')">{{ weather.uvIndex }}<span class="metric-unit">/11</span></div>
+      <div
+        class="metric-value"
+        [style.color]="getMetricColor(weather.uvIndex, 'uv')"
+      >
+        {{ weather.uvIndex }}<span class="metric-unit">/11</span>
+      </div>
       <div class="progress-bar">
-        <div class="progress-fill" [style.width]="getUvWidth(weather.uvIndex)" [style.background]="getMetricColor(weather.uvIndex, 'uv')"></div>
+        <div
+          class="progress-fill"
+          [style.width]="getUvWidth(weather.uvIndex)"
+          [style.background]="getMetricColor(weather.uvIndex, 'uv')"
+        ></div>
       </div>
       <p class="metric-note text-muted">{{ getUvLabel(weather.uvIndex) }}</p>
     </div>
@@ -102,83 +163,122 @@
     <div class="metric-card glass-card glass-card-hover">
       <div class="metric-header">
         <span class="material-symbols-outlined text-secondary">eco</span>
-        <span class="text-label text-muted">Qualidade do Ar</span>
+        <span class="text-label text-muted">{{ i18n.t("weather.air") }}</span>
       </div>
-      <div class="metric-value text-secondary">{{ weather.aqi }}<span class="metric-unit">AQI</span></div>
-      <span class="badge badge-stable" style="margin-top:8px">{{ weather.aqiLabel }}</span>
+      <div class="metric-value text-secondary">
+        {{ weather.aqi }}<span class="metric-unit">AQI</span>
+      </div>
+      <span class="badge badge-stable" style="margin-top: 8px">{{
+        weather.aqiLabel
+      }}</span>
     </div>
-
   </div>
 
   <!-- Forecast Row -->
   <div class="forecast-grid animate-in-3">
-
     <!-- Hourly Forecast -->
     <div class="glass-card hourly-card">
-      <h3 class="text-headline-md card-title">Previsão por Hora</h3>
+      <h3 class="text-headline-md card-title">
+        {{ i18n.t("weather.hourly") }}
+      </h3>
       <div class="hourly-scroll">
         <div class="hourly-item" *ngFor="let h of hourly">
           <span class="text-label text-muted">{{ h.time }}</span>
-          <span class="material-symbols-outlined icon-fill text-primary">{{ h.icon }}</span>
-          <span class="text-data">{{ h.temperature }}°</span>
+          <span class="material-symbols-outlined icon-fill text-primary">{{
+            h.icon
+          }}</span>
+          <span class="text-data"
+            >{{ units.convert(h.temperature) }}{{ units.symbol }}</span
+          >
         </div>
       </div>
     </div>
 
     <!-- 7-Day Forecast -->
     <div class="glass-card daily-card">
-      <h3 class="text-headline-md card-title">Próximos 7 Dias</h3>
+      <h3 class="text-headline-md card-title">
+        {{ i18n.t("weather.weekly") }}
+      </h3>
       <div class="daily-list">
-        <div class="daily-row" *ngFor="let d of daily">
-          <span class="day-label">{{ d.day }}</span>
-          <span class="material-symbols-outlined text-primary daily-icon">{{ d.icon }}</span>
+        <div class="daily-row" *ngFor="let d of daily; let i = index">
+          <span class="day-label">{{ getDayLabel(i, d.day) }}</span>
+          <span class="material-symbols-outlined text-primary daily-icon">{{
+            d.icon
+          }}</span>
           <div class="daily-range">
-            <span class="text-muted">{{ d.low }}°</span>
+            <span class="text-muted"
+              >{{ units.convert(d.low) }}{{ units.symbol }}</span
+            >
             <div class="range-bar">
               <div class="range-fill"></div>
             </div>
-            <span>{{ d.high }}°</span>
+            <span>{{ units.convert(d.high) }}{{ units.symbol }}</span>
           </div>
           <span class="precip-badge" *ngIf="d.precipChance > 40">
-            <span class="material-symbols-outlined" style="font-size:12px">water_drop</span>
+            <span class="material-symbols-outlined" style="font-size: 12px"
+              >water_drop</span
+            >
             {{ d.precipChance }}%
           </span>
         </div>
       </div>
     </div>
-
   </div>
 
   <!-- Sun Card -->
   <div class="sun-card glass-card animate-in-3">
     <div class="sun-header">
-      <h3 class="text-headline-md">Sol &amp; Lua</h3>
-      <span class="material-symbols-outlined text-tertiary icon-fill">wb_sunny</span>
+      <h3 class="text-headline-md">{{ i18n.t("dashboard.sunMoon") }}</h3>
+      <span class="material-symbols-outlined text-tertiary icon-fill"
+        >wb_sunny</span
+      >
     </div>
     <div class="sun-arc">
       <svg viewBox="0 0 280 120" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20,100 Q140,-10 260,100" stroke="rgba(237,194,37,0.25)" stroke-width="2" stroke-dasharray="5,4" fill="none"/>
-        <circle cx="195" cy="35" r="8" fill="#edc225" filter="drop-shadow(0 0 10px rgba(237,194,37,0.5))"/>
-        <line x1="20" y1="100" x2="260" y2="100" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <path
+          d="M20,100 Q140,-10 260,100"
+          stroke="rgba(237,194,37,0.25)"
+          stroke-width="2"
+          stroke-dasharray="5,4"
+          fill="none"
+        />
+        <circle
+          cx="195"
+          cy="35"
+          r="8"
+          fill="#edc225"
+          filter="drop-shadow(0 0 10px rgba(237,194,37,0.5))"
+        />
+        <line
+          x1="20"
+          y1="100"
+          x2="260"
+          y2="100"
+          stroke="rgba(255,255,255,0.1)"
+          stroke-width="1"
+        />
       </svg>
     </div>
     <div class="sun-times">
       <div>
-        <span class="text-label text-muted">Nascer</span>
+        <span class="text-label text-muted">{{
+          i18n.t("weather.sunrise")
+        }}</span>
         <span class="text-data">{{ weather.sunrise }}</span>
       </div>
-      <div style="text-align:right">
-        <span class="text-label text-muted">Pôr do Sol</span>
+      <div style="text-align: right">
+        <span class="text-label text-muted">{{
+          i18n.t("weather.sunset")
+        }}</span>
         <span class="text-data">{{ weather.sunset }}</span>
       </div>
     </div>
   </div>
-
 </div>
 
 <ng-template #loadingTpl>
   <div class="loading-grid">
-    <div class="skeleton" style="height:300px;border-radius:16px"></div>
-    <div class="skeleton" style="height:300px;border-radius:16px"></div>
+    <div class="skeleton" style="height: 300px; border-radius: 16px"></div>
+    <div class="skeleton" style="height: 300px; border-radius: 16px"></div>
   </div>
 </ng-template>

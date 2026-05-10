@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="page-header">
     <div>
-      <h1 class="text-headline-xl">Relatórios e Análises</h1>
+      <h1 class="text-headline-xl">{{ i18n.t("reports.title") }}</h1>
     </div>
     <div class="header-actions">
       <button
@@ -13,13 +13,15 @@
         <span class="material-symbols-outlined">{{
           exporting ? "hourglass_empty" : "download"
         }}</span>
-        Exportar CSV
+        {{ i18n.t("reports.export_csv") }}
       </button>
       <button class="btn-primary" (click)="generate()" [disabled]="generating">
         <span class="material-symbols-outlined">{{
           generating ? "hourglass_empty" : "add"
         }}</span>
-        {{ generating ? "A gerar..." : "Gerar Relatório" }}
+        {{
+          generating ? i18n.t("reports.generating") : i18n.t("reports.generate")
+        }}
       </button>
     </div>
   </div>
@@ -27,22 +29,22 @@
   <!-- Resumo operacional -->
   <div class="charts-grid animate-in-1" *ngIf="summary">
     <div class="glass-card chart-card">
-      <h3 class="text-headline-md">Resumo Operacional</h3>
+      <h3 class="text-headline-md">{{ i18n.t("reports.summary_title") }}</h3>
       <div class="summary-stats">
         <div class="glass-card stat-mini">
-          <p class="text-label text-muted">Utilizadores</p>
+          <p class="text-label text-muted">{{ i18n.t("reports.users") }}</p>
           <p class="text-headline-md stat-num">{{ summary.total_users }}</p>
         </div>
         <div class="glass-card stat-mini">
-          <p class="text-label text-muted">Cidades</p>
+          <p class="text-label text-muted">{{ i18n.t("reports.cities") }}</p>
           <p class="text-headline-md stat-num">{{ summary.total_cities }}</p>
         </div>
         <div class="glass-card stat-mini">
-          <p class="text-label text-muted">Relatórios</p>
+          <p class="text-label text-muted">{{ i18n.t("reports.reports") }}</p>
           <p class="text-headline-md stat-num">{{ reports.length }}</p>
         </div>
         <div class="glass-card stat-mini">
-          <p class="text-label text-muted">Atualizado</p>
+          <p class="text-label text-muted">{{ i18n.t("reports.updated") }}</p>
           <p class="text-body-sm stat-date">
             {{ summary.generated_at | date: "dd/MM/yy, HH:mm" }}
           </p>
@@ -54,12 +56,10 @@
   <!-- Relatórios gerados -->
   <div class="glass-card exports-card animate-in-2">
     <div class="exports-header">
-      <h3 class="text-headline-md">Relatórios Gerados</h3>
-      <span class="text-muted text-body-sm"
-        >{{ reports.length }} relatório{{
-          reports.length !== 1 ? "s" : ""
-        }}</span
-      >
+      <h3 class="text-headline-md">{{ i18n.t("reports.generated_list") }}</h3>
+      <span class="text-muted text-body-sm">
+        {{ reports.length }} {{ i18n.t("reports.report_count") }}
+      </span>
     </div>
 
     <!-- Loading -->
@@ -67,13 +67,13 @@
       <span class="material-symbols-outlined animate-pulse"
         >hourglass_empty</span
       >
-      <p class="text-muted text-body-sm">A carregar...</p>
+      <p class="text-muted text-body-sm">{{ i18n.t("common.loading") }}</p>
     </div>
 
     <!-- Empty -->
     <div class="empty-state" *ngIf="!loading && reports.length === 0">
       <span class="material-symbols-outlined">description</span>
-      <p class="text-muted text-body-sm">Nenhum relatório gerado ainda</p>
+      <p class="text-muted text-body-sm">{{ i18n.t("reports.empty") }}</p>
     </div>
 
     <!-- List -->
@@ -83,15 +83,17 @@
           <span class="material-symbols-outlined">description</span>
         </div>
         <div class="export-info">
-          <p class="text-body-sm report-name">{{ rep.name }}</p>
+          <!-- Título composto a partir da data → traduz automaticamente -->
+          <p class="text-body-sm report-name">{{ reportTitle(rep) }}</p>
           <p class="text-label text-muted">
-            {{ rep.type }} · {{ rep.created_at | date: "dd/MM/yy, HH:mm" }}
+            {{ reportType(rep) }} ·
+            {{ rep.created_at | date: "dd/MM/yy, HH:mm" }}
           </p>
         </div>
         <div class="export-actions">
           <button
             class="btn-icon download-btn"
-            title="Descarregar CSV"
+            [title]="i18n.t('reports.download_csv')"
             (click)="downloadReport(rep, 'csv')"
           >
             <span class="material-symbols-outlined" style="font-size: 18px"
@@ -100,7 +102,7 @@
           </button>
           <button
             class="btn-icon download-btn"
-            title="Descarregar PDF"
+            [title]="i18n.t('reports.download_pdf')"
             (click)="downloadReport(rep, 'pdf')"
           >
             <span class="material-symbols-outlined" style="font-size: 18px"

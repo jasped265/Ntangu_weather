@@ -1,112 +1,344 @@
 <div class="favorites animate-in">
   <div class="page-header">
     <div>
-      <h1 class="text-headline-xl">Cidades Favoritas</h1>
-      <p class="text-body-sm text-muted">Acompanhe as condições climáticas dos seus locais salvos.</p>
+      <h1 class="text-headline-xl">{{ i18n.t("favorites.title") }}</h1>
+      <p class="text-body-sm text-muted">{{ i18n.t("favorites.subtitle") }}</p>
     </div>
-    <button class="btn-glass" (click)="showAdd = !showAdd">
+    <button class="btn-glass" (click)="showCityModal = true">
       <span class="material-symbols-outlined">add_location</span>
-      Adicionar Cidade
+      {{ i18n.t("favorites.addCity") }}
     </button>
   </div>
 
-  <!-- Add city panel -->
+  <!-- Todas as cidades já registadas (visível por defeito ao entrar) -->
   <div class="add-panel glass-card animate-in" *ngIf="showAdd">
-    <h3 class="text-headline-md" style="margin-bottom:16px">Todas as Cidades</h3>
-    <div class="city-toggle-grid">
-      <div class="city-toggle glass-card glass-card-hover" *ngFor="let city of allCities" (click)="toggleFavorite(city)">
+    <div class="panel-header">
+      <div>
+        <h3 class="text-headline-md">{{ i18n.t("favorites.allCities") }}</h3>
+        <p class="text-body-sm text-muted">
+          {{ allCities.length }} {{ i18n.t("favorites.registered") }}
+        </p>
+      </div>
+      <button class="btn-icon" (click)="showAdd = false" aria-label="Hide">
+        <span class="material-symbols-outlined">expand_less</span>
+      </button>
+    </div>
+
+    <div class="city-toggle-grid" *ngIf="allCities.length > 0; else emptyAll">
+      <div
+        class="city-toggle glass-card glass-card-hover"
+        *ngFor="let city of allCities"
+        (click)="toggleFavorite(city)"
+      >
         <div class="city-toggle-info">
           <span class="text-headline-md">{{ city.name }}</span>
           <span class="text-body-sm text-muted">{{ city.country }}</span>
         </div>
-        <span class="material-symbols-outlined" [style.color]="city.isFavorite ? 'var(--error)' : 'var(--outline)'"
-          [class.icon-fill]="city.isFavorite">favorite</span>
+        <span
+          class="material-symbols-outlined"
+          [style.color]="city.isFavorite ? 'var(--error)' : 'var(--outline)'"
+          [class.icon-fill]="city.isFavorite"
+          >favorite</span
+        >
       </div>
     </div>
+
+    <ng-template #emptyAll>
+      <div class="empty-state">
+        <span class="material-symbols-outlined">location_off</span>
+        <p class="text-body-sm text-muted">
+          Ainda não há cidades registadas. Clique em
+          <strong>{{ i18n.t("favorites.addCity") }}</strong> para adicionar a
+          primeira.
+        </p>
+      </div>
+    </ng-template>
   </div>
 
+  <!-- Botão para reabrir o painel se estiver oculto -->
+  <button
+    *ngIf="!showAdd"
+    class="btn-glass"
+    (click)="showAdd = true"
+    style="align-self: flex-start"
+  >
+    <span class="material-symbols-outlined">expand_more</span>
+    {{ i18n.t("favorites.allCities") }}
+  </button>
+
   <!-- Main favorite (hero) -->
-  <div class="fav-hero glass-card glass-card-hover animate-in-1" *ngIf="cities.length > 0">
+  <div
+    class="fav-hero glass-card glass-card-hover animate-in-1"
+    *ngIf="cities.length > 0"
+  >
     <div class="hero-content">
       <div>
-        <span class="badge badge-stable" style="margin-bottom:10px">Localização Principal</span>
+        <span class="badge badge-stable" style="margin-bottom: 10px">{{
+          i18n.t("favorites.mainLocation")
+        }}</span>
         <h2 class="text-headline-xl">{{ cities[0].name }}</h2>
         <p class="text-body-sm text-muted">{{ cities[0].country }}</p>
       </div>
       <div class="hero-temp-block">
-        <span class="hero-temp">{{ getWeather(cities[0].name)?.temperature ?? '--' }}°</span>
+        <span class="hero-temp">{{ getTemp(cities[0].name) }}</span>
         <div>
-          <span class="material-symbols-outlined icon-fill text-tertiary" style="font-size:40px">{{ getWeather(cities[0].name)?.conditionIcon ?? 'cloud' }}</span>
-          <p class="text-headline-md text-primary">{{ getWeather(cities[0].name)?.condition ?? '—' }}</p>
+          <span
+            class="material-symbols-outlined icon-fill text-tertiary"
+            style="font-size: 40px"
+            >{{ getWeather(cities[0].name)?.conditionIcon ?? "cloud" }}</span
+          >
+          <p class="text-headline-md text-primary">
+            {{ getWeather(cities[0].name)?.condition ?? "—" }}
+          </p>
         </div>
       </div>
     </div>
     <div class="hero-footer">
-      <span class="text-body-sm text-muted">Humidade {{ getWeather(cities[0].name)?.humidity ?? '--' }}%</span>
-      <span class="text-body-sm text-muted">Vento {{ getWeather(cities[0].name)?.windSpeed ?? '--' }} km/h</span>
+      <span class="text-body-sm text-muted"
+        >{{ i18n.t("weather.humidity") }}
+        {{ getWeather(cities[0].name)?.humidity ?? "--" }}%</span
+      >
+      <span class="text-body-sm text-muted"
+        >{{ i18n.t("weather.wind") }}
+        {{ getWeather(cities[0].name)?.windSpeed ?? "--" }} km/h</span
+      >
       <button class="btn-icon" (click)="toggleFavorite(cities[0])">
-        <span class="material-symbols-outlined icon-fill" style="color:var(--error)">favorite</span>
+        <span
+          class="material-symbols-outlined icon-fill"
+          style="color: var(--error)"
+          >favorite</span
+        >
       </button>
     </div>
   </div>
 
   <!-- City cards grid -->
   <div class="city-cards-grid animate-in-2">
-    <div class="city-card glass-card glass-card-hover" *ngFor="let city of cities.slice(1)">
+    <div
+      class="city-card glass-card glass-card-hover"
+      *ngFor="let city of cities.slice(1)"
+    >
       <div class="city-card-top">
         <div>
           <h3 class="text-headline-md">{{ city.name }}</h3>
           <p class="text-body-sm text-muted">{{ city.country }}</p>
         </div>
-        <button class="btn-icon" (click)="toggleFavorite(city)" style="width:32px;height:32px">
-          <span class="material-symbols-outlined icon-fill" style="color:var(--error);font-size:18px">favorite</span>
+        <button
+          class="btn-icon"
+          (click)="toggleFavorite(city)"
+          style="width: 32px; height: 32px"
+        >
+          <span
+            class="material-symbols-outlined icon-fill"
+            style="color: var(--error); font-size: 18px"
+            >favorite</span
+          >
         </button>
       </div>
       <div class="city-card-main">
-        <span class="city-temp">{{ getWeather(city.name)?.temperature ?? '--' }}°</span>
-        <div style="text-align:right">
-          <span class="material-symbols-outlined icon-fill text-primary" style="font-size:28px">{{ getWeather(city.name)?.conditionIcon ?? 'cloud' }}</span>
-          <p class="text-label text-muted">{{ getWeather(city.name)?.condition ?? '—' }}</p>
+        <span class="city-temp">{{ getTemp(city.name) }}</span>
+        <div style="text-align: right">
+          <span
+            class="material-symbols-outlined icon-fill text-primary"
+            style="font-size: 28px"
+            >{{ getWeather(city.name)?.conditionIcon ?? "cloud" }}</span
+          >
+          <p class="text-label text-muted">
+            {{ getWeather(city.name)?.condition ?? "—" }}
+          </p>
         </div>
       </div>
       <div class="city-card-footer">
-        <span class="text-body-sm text-muted">H: {{ getWeather(city.name)?.humidity ?? '--' }}%</span>
-        <span class="text-body-sm text-muted">V: {{ getWeather(city.name)?.windSpeed ?? '--' }} km/h</span>
+        <span class="text-body-sm text-muted"
+          >H: {{ getWeather(city.name)?.humidity ?? "--" }}%</span
+        >
+        <span class="text-body-sm text-muted"
+          >V: {{ getWeather(city.name)?.windSpeed ?? "--" }} km/h</span
+        >
       </div>
-    </div>
-
-    <!-- Add card -->
-    <div class="add-card glass-card" (click)="showAdd = true" style="cursor:pointer">
-      <div class="add-card-icon">
-        <span class="material-symbols-outlined text-primary" style="font-size:36px">add_circle</span>
-      </div>
-      <h3 class="text-headline-md" style="text-align:center">Novo Destino</h3>
-      <p class="text-body-sm text-muted" style="text-align:center;margin-top:6px">Pesquise cidades ao redor do mundo</p>
     </div>
   </div>
 
   <!-- Insights -->
   <div class="insights animate-in-3" *ngIf="cities.length > 0">
-    <h2 class="text-headline-md" style="margin-bottom:16px">Insights dos Favoritos</h2>
+    <h2 class="text-headline-md" style="margin-bottom: 16px">
+      {{ i18n.t("favorites.insights") }}
+    </h2>
     <div class="insights-grid">
-      <div class="insight-card glass-card" style="text-align:center;padding:20px">
-        <p class="text-label text-muted">Temperatura Média</p>
-        <p class="text-display" style="font-size:48px;line-height:1.2;color:var(--primary);margin-top:8px">{{ avgTemp }}°</p>
+      <div
+        class="insight-card glass-card"
+        style="text-align: center; padding: 20px"
+      >
+        <p class="text-label text-muted">{{ i18n.t("favorites.avgTemp") }}</p>
+        <p
+          class="text-display"
+          style="
+            font-size: 48px;
+            line-height: 1.2;
+            color: var(--primary);
+            margin-top: 8px;
+          "
+        >
+          {{ avgTemp }}
+        </p>
       </div>
-      <div class="insight-card glass-card" style="text-align:center;padding:20px">
-        <p class="text-label text-muted">Cidades Salvas</p>
-        <p class="text-display" style="font-size:48px;line-height:1.2;color:var(--secondary);margin-top:8px">{{ cities.length }}</p>
+      <div
+        class="insight-card glass-card"
+        style="text-align: center; padding: 20px"
+      >
+        <p class="text-label text-muted">
+          {{ i18n.t("favorites.savedCities") }}
+        </p>
+        <p
+          class="text-display"
+          style="
+            font-size: 48px;
+            line-height: 1.2;
+            color: var(--secondary);
+            margin-top: 8px;
+          "
+        >
+          {{ cities.length }}
+        </p>
       </div>
-      <div class="insight-card glass-card" style="text-align:center;padding:20px">
-        <p class="text-label text-muted">Países</p>
-        <p class="text-display" style="font-size:48px;line-height:1.2;color:var(--on-surface);margin-top:8px">
+      <div
+        class="insight-card glass-card"
+        style="text-align: center; padding: 20px"
+      >
+        <p class="text-label text-muted">{{ i18n.t("favorites.countries") }}</p>
+        <p
+          class="text-display"
+          style="
+            font-size: 48px;
+            line-height: 1.2;
+            color: var(--on-surface);
+            margin-top: 8px;
+          "
+        >
           {{ uniqueCountryCount }}
         </p>
       </div>
-      <div class="insight-card glass-card" style="text-align:center;padding:20px">
-        <p class="text-label text-muted">Índice UV Médio</p>
-        <p class="text-display" style="font-size:48px;line-height:1.2;color:var(--tertiary);margin-top:8px">—</p>
+      <div
+        class="insight-card glass-card"
+        style="text-align: center; padding: 20px"
+      >
+        <p class="text-label text-muted">{{ i18n.t("favorites.avgUv") }}</p>
+        <p
+          class="text-display"
+          style="
+            font-size: 48px;
+            line-height: 1.2;
+            color: var(--tertiary);
+            margin-top: 8px;
+          "
+        >
+          —
+        </p>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- New City Modal -->
+<div class="modal-overlay" *ngIf="showCityModal" (click)="closeCityModal()">
+  <div
+    class="modal-box glass-card animate-in"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="modal-header">
+      <div>
+        <h3 class="text-headline-md">{{ i18n.t("backoffice.new_city") }}</h3>
+        <p class="text-body-sm text-muted">
+          {{ i18n.t("favorites.searchDesc") }}
+        </p>
+      </div>
+      <button class="btn-icon" (click)="closeCityModal()" aria-label="Close">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="modal-form">
+      <div class="field-group">
+        <label class="text-label text-muted">
+          {{ i18n.t("backoffice.field_city_name") }} *
+        </label>
+        <input
+          class="input-glass"
+          type="text"
+          [(ngModel)]="newCity.name"
+          (ngModelChange)="addError = ''"
+          placeholder="Ex: Benguela"
+          autocomplete="off"
+          [disabled]="adding"
+        />
+      </div>
+
+      <div class="field-group">
+        <label class="text-label text-muted">
+          {{ i18n.t("backoffice.field_country") }} *
+        </label>
+        <input
+          class="input-glass"
+          type="text"
+          [(ngModel)]="newCity.country"
+          (ngModelChange)="addError = ''"
+          placeholder="Ex: Angola"
+          autocomplete="off"
+          [disabled]="adding"
+        />
+      </div>
+
+      <div class="coord-grid">
+        <div class="field-group">
+          <label class="text-label text-muted">
+            {{ i18n.t("backoffice.field_lat") }}
+          </label>
+          <input
+            class="input-glass"
+            type="number"
+            step="0.0001"
+            [(ngModel)]="newCity.lat"
+            placeholder="-12.578"
+            [disabled]="adding"
+          />
+        </div>
+        <div class="field-group">
+          <label class="text-label text-muted">
+            {{ i18n.t("backoffice.field_lon") }}
+          </label>
+          <input
+            class="input-glass"
+            type="number"
+            step="0.0001"
+            [(ngModel)]="newCity.lon"
+            placeholder="13.41"
+            [disabled]="adding"
+          />
+        </div>
+      </div>
+
+      <p class="form-error" *ngIf="addError">
+        <span class="material-symbols-outlined">error</span> {{ addError }}
+      </p>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-glass" (click)="closeCityModal()" [disabled]="adding">
+        {{ i18n.t("common.cancel") }}
+      </button>
+      <button
+        class="btn-primary"
+        (click)="addCity()"
+        [disabled]="adding || !canSubmit()"
+      >
+        <span
+          *ngIf="adding"
+          class="material-symbols-outlined spin"
+          style="font-size: 18px"
+          >progress_activity</span
+        >
+        {{ adding ? i18n.t("common.loading") : i18n.t("backoffice.add_city") }}
+      </button>
     </div>
   </div>
 </div>

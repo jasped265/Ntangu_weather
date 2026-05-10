@@ -1,14 +1,22 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnDestroy, OnInit } from '@angular/core';
 import { ThemeService, I18nService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
 import { WeatherService, LocationResult } from '../../services/weather.service';
 import { LocationStoreService } from '../../services/location-store.service';
-import { Subject, debounceTime, distinctUntilChanged, filter, map, switchMap, takeUntil } from 'rxjs';
+import {
+  Subject,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  takeUntil,
+} from 'rxjs';
 
 @Component({
   selector: 'app-topbar',
   templateUrl: './topbar.component.html',
-  styleUrls: ['./topbar.component.scss']
+  styleUrls: ['./topbar.component.scss'],
 })
 export class TopbarComponent implements OnInit, OnDestroy {
   searchQuery = '';
@@ -23,10 +31,16 @@ export class TopbarComponent implements OnInit, OnDestroy {
     public i18n: I18nService,
     public auth: AuthService,
     private weather: WeatherService,
-    private locationStore: LocationStoreService
+    private locationStore: LocationStoreService,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit(): void {
+    // Re-render placeholder text when language changes
+    this.i18n.lang$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.cdr.markForCheck();
+    });
+
     this.search$
       .pipe(
         map((q) => q.trim()),
@@ -37,7 +51,7 @@ export class TopbarComponent implements OnInit, OnDestroy {
           this.searching = true;
           return this.weather.searchLocations(q);
         }),
-        takeUntil(this.destroy$)
+        takeUntil(this.destroy$),
       )
       .subscribe({
         next: (items) => {

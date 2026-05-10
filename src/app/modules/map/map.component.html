@@ -1,10 +1,8 @@
 <div class="map-page animate-in">
   <div class="map-header">
     <div>
-      <h1 class="text-headline-xl">Mapa Interativo</h1>
-      <p class="text-body-sm text-muted">
-        Visualize dados atmosféricos em tempo real
-      </p>
+      <h1 class="text-headline-xl">{{ i18n.t("map.title") }}</h1>
+      <p class="text-body-sm text-muted">{{ i18n.t("map.subtitle") }}</p>
     </div>
   </div>
 
@@ -39,7 +37,7 @@
       <!-- Live badge -->
       <div class="live-badge">
         <div class="live-dot animate-pulse"></div>
-        <span class="text-label">Live · Radar de Vento</span>
+        <span class="text-label">{{ i18n.t("map.live_label") }}</span>
       </div>
 
       <!-- Location info -->
@@ -50,7 +48,7 @@
           >location_on</span
         >
         <div>
-          <p class="text-label text-muted">Visualizando</p>
+          <p class="text-label text-muted">{{ i18n.t("map.viewing") }}</p>
           <p class="text-body-sm" style="font-weight: 600">
             {{ selectedMarker?.name || "—" }}
           </p>
@@ -63,7 +61,7 @@
       <!-- Layer control -->
       <div class="layers-panel glass-card">
         <div class="panel-header">
-          <h3 class="text-headline-md">Camadas</h3>
+          <h3 class="text-headline-md">{{ i18n.t("map.layers") }}</h3>
           <span class="material-symbols-outlined text-primary">layers</span>
         </div>
         <div class="layer-list">
@@ -85,7 +83,7 @@
                     ? 'var(--on-surface)'
                     : 'var(--on-surface-variant)'
                 "
-                >{{ layer.label }}</span
+                >{{ i18n.t(layer.labelKey) }}</span
               >
             </div>
             <div class="toggle-switch" [class.on]="layer.active">
@@ -94,10 +92,14 @@
           </div>
         </div>
         <div class="precision-control">
-          <p class="text-label text-muted">Precisão Visual</p>
+          <p class="text-label text-muted">{{ i18n.t("map.precision") }}</p>
           <div class="precision-labels">
-            <span class="text-label text-muted">Baixa</span>
-            <span class="text-label text-muted">Ultra HD</span>
+            <span class="text-label text-muted">{{
+              i18n.t("map.precision_low")
+            }}</span>
+            <span class="text-label text-muted">{{
+              i18n.t("map.precision_high")
+            }}</span>
           </div>
           <div class="progress-bar">
             <div class="progress-fill" [style.width]="precision + '%'"></div>
@@ -108,31 +110,43 @@
       <!-- Time stats -->
       <div class="stats-panel glass-card">
         <h3 class="text-headline-md" style="margin-bottom: 14px">
-          Dados Atuais
+          {{ i18n.t("map.current_data") }}
         </h3>
         <div class="stat-row">
-          <span class="text-body-sm text-muted">Velocidade Média</span>
+          <span class="text-body-sm text-muted">{{
+            i18n.t("map.avg_wind")
+          }}</span>
           <span class="text-data text-primary"
             >{{ currentWeather?.windSpeed ?? "--" }} km/h</span
           >
         </div>
         <div class="divider"></div>
         <div class="stat-row">
-          <span class="text-body-sm text-muted">Pressão</span>
+          <span class="text-body-sm text-muted">{{
+            i18n.t("map.pressure")
+          }}</span>
           <span class="text-data"
             >{{ currentWeather?.pressure ?? "--" }} hPa</span
           >
         </div>
         <div class="divider"></div>
         <div class="stat-row">
-          <span class="text-body-sm text-muted">Temperatura</span>
-          <span class="text-data text-tertiary"
-            >{{ currentWeather?.temperature ?? "--" }}°C</span
-          >
+          <span class="text-body-sm text-muted">{{
+            i18n.t("weather.temperature")
+          }}</span>
+          <span class="text-data text-tertiary">
+            {{
+              currentWeather
+                ? units.convert(currentWeather.temperature) + units.symbol
+                : "--"
+            }}
+          </span>
         </div>
         <div class="divider"></div>
         <div class="stat-row">
-          <span class="text-body-sm text-muted">Humidade</span>
+          <span class="text-body-sm text-muted">{{
+            i18n.t("weather.humidity")
+          }}</span>
           <span class="text-data text-secondary"
             >{{ currentWeather?.humidity ?? "--" }}%</span
           >

@@ -5,8 +5,11 @@ import {
   AfterViewInit,
   ElementRef,
   ViewChild,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { I18nService, UnitsService } from '../../shared/services/theme.service';
+import { Subject, takeUntil } from 'rxjs';
 
 interface DayData {
   date: string;
@@ -60,53 +63,82 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     { name: 'Cabinda', lat: -5.55, lon: 12.19 },
   ];
 
-  tabs = [
-    {
-      key: 'temperatura',
-      label: 'Temperatura',
-      icon: 'thermostat',
-      unit: '°C',
-      color: '#bec5e4',
-    },
-    {
-      key: 'chuva',
-      label: 'Precipitação',
-      icon: 'water_drop',
-      unit: 'mm',
-      color: '#b9c3ff',
-    },
-    {
-      key: 'humidade',
-      label: 'Humidade',
-      icon: 'humidity_percentage',
-      unit: '%',
-      color: '#edc225',
-    },
-    {
-      key: 'vento',
-      label: 'Vento',
-      icon: 'air',
-      unit: 'km/h',
-      color: '#bec5e4',
-    },
-  ] as const;
+  /** Tab labels come from i18n — rebuilt in refreshTabs() on lang change */
+  tabs!: {
+    key: 'temperatura' | 'chuva' | 'humidade' | 'vento';
+    label: string;
+    icon: string;
+    unit: string;
+    color: string;
+  }[];
 
-  ranges = [
-    { key: '30d', label: '30 dias' },
-    { key: '90d', label: '3 meses' },
-    { key: '1a', label: '1 ano' },
-    { key: '5a', label: '5 anos' },
-  ] as const;
+  /** Range labels come from i18n */
+  ranges!: { key: '30d' | '90d' | '1a' | '5a'; label: string }[];
 
   dailyData: DayData[] = [];
   monthlyData: MonthData[] = [];
 
   private observer!: ResizeObserver;
+  private readonly destroy$ = new Subject<void>();
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    public i18n: I18nService,
+    public units: UnitsService,
+    private cdr: ChangeDetectorRef,
+  ) {
+    this.refreshTabs();
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  private refreshTabs(): void {
+    this.tabs = [
+      {
+        key: 'temperatura',
+        label: this.i18n.t('history.tab_temp'),
+        icon: 'thermostat',
+        unit: '°C',
+        color: '#bec5e4',
+      },
+      {
+        key: 'chuva',
+        label: this.i18n.t('history.tab_rain'),
+        icon: 'water_drop',
+        unit: 'mm',
+        color: '#b9c3ff',
+      },
+      {
+        key: 'humidade',
+        label: this.i18n.t('history.tab_humidity'),
+        icon: 'humidity_percentage',
+        unit: '%',
+        color: '#edc225',
+      },
+      {
+        key: 'vento',
+        label: this.i18n.t('history.tab_wind'),
+        icon: 'air',
+        unit: 'km/h',
+        color: '#bec5e4',
+      },
+    ];
+    this.ranges = [
+      { key: '30d', label: this.i18n.t('history.range_30d') },
+      { key: '90d', label: this.i18n.t('history.range_90d') },
+      { key: '1a', label: this.i18n.t('history.range_1y') },
+      { key: '5a', label: this.i18n.t('history.range_5y') },
+    ];
+  }
 
   get currentTab() {
     return this.tabs.find((t) => t.key === this.activeTab)!;
+  }
+
+  /** For temperature tab the unit follows UnitsService; others are fixed */
+  get currentUnit(): string {
+    if (this.activeTab === 'temperatura') return this.units.symbol;
+    return this.currentTab.unit;
   }
 
   get stats() {
@@ -121,33 +153,57 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
             ? 'humidity'
             : 'wind';
     const vals = d.map((x) => (x as any)[key] as number);
-    const max = Math.max(...vals);
-    const min = Math.min(...vals);
-    const avg = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+    const rawMax = Math.max(...vals);
+    const rawMin = Math.min(...vals);
+    const rawAvg = vals.reduce((a, b) => a + b, 0) / vals.length;
     const total = Math.round(vals.reduce((a, b) => a + b, 0));
-    return { max, min, avg, total };
+
+    if (this.activeTab === 'temperatura') {
+      return {
+        max: this.units.convert(rawMax),
+        min: this.units.convert(rawMin),
+        avg: this.units.convert(Math.round(rawAvg)),
+        total,
+      };
+    }
+    return { max: rawMax, min: rawMin, avg: Math.round(rawAvg), total };
   }
 
-  ngOnInit() {
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
+  ngOnInit(): void {
     this.fetchData();
+
+    this.i18n.lang$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.refreshTabs(); // rebuild translated tab/range labels
+      this.buildMonthlyData(); // rebuild month names in the right language
+      this.cdr.markForCheck();
+    });
+
+    this.units.unit$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.cdr.markForCheck();
+      setTimeout(() => this.drawChart(), 60);
+    });
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     setTimeout(() => this.drawChart(), 100);
     this.observer = new ResizeObserver(() => this.drawChart());
     const parent = this.tempCanvasRef?.nativeElement?.parentElement;
     if (parent) this.observer.observe(parent);
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.observer?.disconnect();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   // ── Date helpers ──────────────────────────────────────────────────────────
 
   private getDateRange(): { start: string; end: string } {
     const end = new Date();
-    end.setDate(end.getDate() - 1); // Open-Meteo: ontem é o mais recente disponível
+    end.setDate(end.getDate() - 1);
     const start = new Date(end);
     if (this.activeRange === '30d') start.setDate(start.getDate() - 29);
     if (this.activeRange === '90d') start.setDate(start.getDate() - 89);
@@ -159,29 +215,72 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     };
   }
 
+  private locale(): string {
+    return this.i18n.currentLang === 'pt' ? 'pt-AO' : 'en-GB';
+  }
+
   private fmt(dateStr: string): string {
     const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('pt-AO', { day: '2-digit', month: 'short' });
+    return d.toLocaleDateString(this.locale(), {
+      day: '2-digit',
+      month: 'short',
+    });
   }
 
   private fmtDay(dateStr: string): string {
     const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString('pt-AO', { weekday: 'short' });
+    return d.toLocaleDateString(this.locale(), { weekday: 'short' });
   }
 
   private conditionFromRain(
     rain: number,
     tempMax: number,
   ): { condition: string; icon: string } {
-    if (rain > 10) return { condition: 'Chuvoso', icon: 'rainy' };
-    if (rain > 2) return { condition: 'Aguaceiro', icon: 'rainy' };
-    if (tempMax > 30) return { condition: 'Ensolarado', icon: 'wb_sunny' };
-    return { condition: 'Nublado', icon: 'cloud' };
+    if (rain > 10)
+      return { condition: this.i18n.t('history.cond_rainy'), icon: 'rainy' };
+    if (rain > 2)
+      return { condition: this.i18n.t('history.cond_shower'), icon: 'rainy' };
+    if (tempMax > 30)
+      return { condition: this.i18n.t('history.cond_sunny'), icon: 'wb_sunny' };
+    return { condition: this.i18n.t('history.cond_cloudy'), icon: 'cloud' };
+  }
+
+  /** Month abbreviations in the active language */
+  private monthNames(): string[] {
+    return this.i18n.currentLang === 'pt'
+      ? [
+          'Jan',
+          'Fev',
+          'Mar',
+          'Abr',
+          'Mai',
+          'Jun',
+          'Jul',
+          'Ago',
+          'Set',
+          'Out',
+          'Nov',
+          'Dez',
+        ]
+      : [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec',
+        ];
   }
 
   // ── API ───────────────────────────────────────────────────────────────────
 
-  fetchData() {
+  fetchData(): void {
     this.isLoading = true;
     this.hasError = false;
     this.dailyData = [];
@@ -189,8 +288,7 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     const { start, end } = this.getDateRange();
     const { lat, lon } = this.selectedCity;
 
-    // Open-Meteo: humidade só existe em hourly, os restantes em daily
-    const urlDaily =
+    const url =
       `https://archive-api.open-meteo.com/v1/archive` +
       `?latitude=${lat}&longitude=${lon}` +
       `&start_date=${start}&end_date=${end}` +
@@ -198,13 +296,11 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
       `&hourly=relative_humidity_2m` +
       `&timezone=Africa%2FLuanda`;
 
-    this.http.get<any>(urlDaily).subscribe({
+    this.http.get<any>(url).subscribe({
       next: (res) => {
         const d = res.daily;
         const h = res.hourly;
 
-        // Calcula média diária de humidade a partir dos valores horários
-        // hourly.time → "YYYY-MM-DDTHH:mm", 24 valores por dia
         const humidityByDay = new Map<string, number[]>();
         (h.time as string[]).forEach((t, i) => {
           const day = t.split('T')[0];
@@ -236,6 +332,7 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
             icon,
           };
         });
+
         this.buildMonthlyData();
         this.isLoading = false;
         setTimeout(() => this.drawChart(), 80);
@@ -249,25 +346,12 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ── Monthly aggregation ───────────────────────────────────────────────────
 
-  private buildMonthlyData() {
+  buildMonthlyData(): void {
     const map = new Map<
       string,
       { temps: number[]; rain: number[]; hum: number[]; wind: number[] }
     >();
-    const monthNames = [
-      'Jan',
-      'Fev',
-      'Mar',
-      'Abr',
-      'Mai',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Set',
-      'Out',
-      'Nov',
-      'Dez',
-    ];
+    const names = this.monthNames();
 
     for (const d of this.dailyData) {
       const key = d.date.substring(0, 7);
@@ -282,7 +366,7 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.monthlyData = Array.from(map.entries()).map(([key, v]) => ({
       month:
-        monthNames[parseInt(key.split('-')[1]) - 1] +
+        names[parseInt(key.split('-')[1]) - 1] +
         " '" +
         key.split('-')[0].slice(2),
       avgTemp: Math.round(v.temps.reduce((a, b) => a + b, 0) / v.temps.length),
@@ -294,23 +378,23 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // ── UI ────────────────────────────────────────────────────────────────────
 
-  selectTab(tab: typeof this.activeTab) {
+  selectTab(tab: typeof this.activeTab): void {
     this.activeTab = tab;
     setTimeout(() => this.drawChart(), 60);
   }
 
-  selectRange(r: typeof this.activeRange) {
+  selectRange(r: typeof this.activeRange): void {
     this.activeRange = r;
     this.fetchData();
   }
 
-  selectCity(city: CityCoords) {
+  selectCity(city: CityCoords): void {
     this.selectedCity = city;
     this.showCityDropdown = false;
     this.fetchData();
   }
 
-  retry() {
+  retry(): void {
     this.fetchData();
   }
 
@@ -322,7 +406,7 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
       .trim();
   }
 
-  drawChart() {
+  drawChart(): void {
     const canvasRef = this.tempCanvasRef;
     if (!canvasRef) return;
     const canvas = canvasRef.nativeElement;
@@ -363,14 +447,15 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
             ? 'humidity'
             : 'wind';
 
-    // 1a / 5a → agrega por mês
     let points: { label: string; value: number }[] = [];
     if (this.activeRange === '1a' || this.activeRange === '5a') {
       points = this.monthlyData.map((m) => ({
         label: m.month,
         value:
           key === 'tempMax'
-            ? m.avgTemp
+            ? this.activeTab === 'temperatura'
+              ? this.units.convert(m.avgTemp)
+              : m.avgTemp
             : key === 'rainfall'
               ? m.totalRain
               : key === 'humidity'
@@ -380,7 +465,10 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     } else {
       points = this.dailyData.map((d) => ({
         label: d.label,
-        value: (d as any)[key] as number,
+        value:
+          this.activeTab === 'temperatura'
+            ? this.units.convert((d as any)[key] as number)
+            : ((d as any)[key] as number),
       }));
     }
 
@@ -390,7 +478,6 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     const minVal = Math.min(...vals) * 0.92;
     const maxVal = Math.max(...vals) * 1.06;
     const range = maxVal - minVal || 1;
-
     const xStep = chartW / Math.max(vals.length - 1, 1);
     const toX = (i: number) => pad.left + i * xStep;
     const toY = (v: number) =>
@@ -414,7 +501,7 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     ctx.setLineDash([]);
 
-    // Fill gradient
+    // Area fill
     const grad = ctx.createLinearGradient(0, pad.top, 0, H - pad.bottom);
     grad.addColorStop(0, lineColor + '33');
     grad.addColorStop(1, lineColor + '00');
@@ -465,7 +552,7 @@ export class HistoryComponent implements OnInit, AfterViewInit, OnDestroy {
       ctx.fillText(points[i].label, toX(i), H - pad.bottom + 18);
     }
 
-    // Last dot
+    // Last point dot
     const lx = toX(vals.length - 1);
     const ly = toY(vals[vals.length - 1]);
     ctx.beginPath();
