@@ -1,16 +1,49 @@
 <div class="favorites animate-in">
+  <!-- Header -->
   <div class="page-header">
     <div>
       <h1 class="text-headline-xl">{{ i18n.t("favorites.title") }}</h1>
       <p class="text-body-sm text-muted">{{ i18n.t("favorites.subtitle") }}</p>
     </div>
-    <button class="btn-glass" (click)="showCityModal = true">
+    <div class="header-actions">
+      <!-- Painel todas as cidades -->
+      <button class="btn-glass" (click)="loadAllCities()">
+        <span class="material-symbols-outlined">location_city</span>
+        {{ i18n.t("favorites.allCities") }}
+      </button>
+      <!-- Adicionar via pesquisa -->
+      <button class="btn-primary" (click)="openCityModal()">
+        <span class="material-symbols-outlined">add_location</span>
+        {{ i18n.t("favorites.addCity") }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div class="empty-state glass-card" *ngIf="loading">
+    <span class="material-symbols-outlined animate-pulse">hourglass_empty</span>
+    <p class="text-body-sm text-muted">{{ i18n.t("common.loading") }}</p>
+  </div>
+
+  <!-- Empty state (sem favoritos) -->
+  <div
+    class="empty-state glass-card animate-in-1"
+    *ngIf="!loading && cities.length === 0"
+  >
+    <span
+      class="material-symbols-outlined"
+      style="font-size: 48px; color: var(--outline)"
+      >favorite_border</span
+    >
+    <p class="text-body-lg">{{ i18n.t("favorites.empty_title") }}</p>
+    <p class="text-body-sm text-muted">{{ i18n.t("favorites.empty_sub") }}</p>
+    <button class="btn-primary" (click)="openCityModal()">
       <span class="material-symbols-outlined">add_location</span>
       {{ i18n.t("favorites.addCity") }}
     </button>
   </div>
 
-  <!-- Todas as cidades já registadas (visível por defeito ao entrar) -->
+  <!-- Painel todas as cidades (toggle) -->
   <div class="add-panel glass-card animate-in" *ngIf="showAdd">
     <div class="panel-header">
       <div>
@@ -28,7 +61,7 @@
       <div
         class="city-toggle glass-card glass-card-hover"
         *ngFor="let city of allCities"
-        (click)="toggleFavorite(city)"
+        (click)="toggleFromAll(city)"
       >
         <div class="city-toggle-info">
           <span class="text-headline-md">{{ city.name }}</span>
@@ -47,35 +80,22 @@
       <div class="empty-state">
         <span class="material-symbols-outlined">location_off</span>
         <p class="text-body-sm text-muted">
-          Ainda não há cidades registadas. Clique em
-          <strong>{{ i18n.t("favorites.addCity") }}</strong> para adicionar a
-          primeira.
+          {{ i18n.t("favorites.no_cities") }}
         </p>
       </div>
     </ng-template>
   </div>
 
-  <!-- Botão para reabrir o painel se estiver oculto -->
-  <button
-    *ngIf="!showAdd"
-    class="btn-glass"
-    (click)="showAdd = true"
-    style="align-self: flex-start"
-  >
-    <span class="material-symbols-outlined">expand_more</span>
-    {{ i18n.t("favorites.allCities") }}
-  </button>
-
   <!-- Main favorite (hero) -->
   <div
     class="fav-hero glass-card glass-card-hover animate-in-1"
-    *ngIf="cities.length > 0"
+    *ngIf="!loading && cities.length > 0"
   >
     <div class="hero-content">
       <div>
-        <span class="badge badge-stable" style="margin-bottom: 10px">{{
-          i18n.t("favorites.mainLocation")
-        }}</span>
+        <span class="badge badge-stable" style="margin-bottom: 10px">
+          {{ i18n.t("favorites.mainLocation") }}
+        </span>
         <h2 class="text-headline-xl">{{ cities[0].name }}</h2>
         <p class="text-body-sm text-muted">{{ cities[0].country }}</p>
       </div>
@@ -94,14 +114,14 @@
       </div>
     </div>
     <div class="hero-footer">
-      <span class="text-body-sm text-muted"
-        >{{ i18n.t("weather.humidity") }}
-        {{ getWeather(cities[0].name)?.humidity ?? "--" }}%</span
-      >
-      <span class="text-body-sm text-muted"
-        >{{ i18n.t("weather.wind") }}
-        {{ getWeather(cities[0].name)?.windSpeed ?? "--" }} km/h</span
-      >
+      <span class="text-body-sm text-muted">
+        {{ i18n.t("weather.humidity") }}
+        {{ getWeather(cities[0].name)?.humidity ?? "--" }}%
+      </span>
+      <span class="text-body-sm text-muted">
+        {{ i18n.t("weather.wind") }}
+        {{ getWeather(cities[0].name)?.windSpeed ?? "--" }} km/h
+      </span>
       <button class="btn-icon" (click)="toggleFavorite(cities[0])">
         <span
           class="material-symbols-outlined icon-fill"
@@ -113,7 +133,10 @@
   </div>
 
   <!-- City cards grid -->
-  <div class="city-cards-grid animate-in-2">
+  <div
+    class="city-cards-grid animate-in-2"
+    *ngIf="!loading && cities.length > 1"
+  >
     <div
       class="city-card glass-card glass-card-hover"
       *ngFor="let city of cities.slice(1)"
@@ -149,18 +172,19 @@
         </div>
       </div>
       <div class="city-card-footer">
-        <span class="text-body-sm text-muted"
-          >H: {{ getWeather(city.name)?.humidity ?? "--" }}%</span
-        >
-        <span class="text-body-sm text-muted"
-          >V: {{ getWeather(city.name)?.windSpeed ?? "--" }} km/h</span
-        >
+        <span class="text-body-sm text-muted">
+          {{ i18n.t("weather.humidity") }}:
+          {{ getWeather(city.name)?.humidity ?? "--" }}%
+        </span>
+        <span class="text-body-sm text-muted">
+          {{ getWeather(city.name)?.windSpeed ?? "--" }} km/h
+        </span>
       </div>
     </div>
   </div>
 
   <!-- Insights -->
-  <div class="insights animate-in-3" *ngIf="cities.length > 0">
+  <div class="insights animate-in-3" *ngIf="!loading && cities.length > 0">
     <h2 class="text-headline-md" style="margin-bottom: 16px">
       {{ i18n.t("favorites.insights") }}
     </h2>
@@ -232,24 +256,25 @@
             margin-top: 8px;
           "
         >
-          —
+          {{ avgUv }}
         </p>
       </div>
     </div>
   </div>
 </div>
 
-<!-- New City Modal -->
+<!-- ── Modal: Pesquisar e Adicionar Cidade ──────────────────────────────────── -->
 <div class="modal-overlay" *ngIf="showCityModal" (click)="closeCityModal()">
   <div
     class="modal-box glass-card animate-in"
     (click)="$event.stopPropagation()"
   >
+    <!-- Header -->
     <div class="modal-header">
       <div>
-        <h3 class="text-headline-md">{{ i18n.t("backoffice.new_city") }}</h3>
+        <h3 class="text-headline-md">{{ i18n.t("favorites.modal_title") }}</h3>
         <p class="text-body-sm text-muted">
-          {{ i18n.t("favorites.searchDesc") }}
+          {{ i18n.t("favorites.modal_sub") }}
         </p>
       </div>
       <button class="btn-icon" (click)="closeCityModal()" aria-label="Close">
@@ -257,87 +282,134 @@
       </button>
     </div>
 
-    <div class="modal-form">
-      <div class="field-group">
-        <label class="text-label text-muted">
-          {{ i18n.t("backoffice.field_city_name") }} *
-        </label>
+    <!-- Search input -->
+    <div class="modal-search">
+      <div class="search-field">
+        <span class="material-symbols-outlined search-icon">search</span>
         <input
-          class="input-glass"
+          class="input-glass search-input"
           type="text"
-          [(ngModel)]="newCity.name"
-          (ngModelChange)="addError = ''"
-          placeholder="Ex: Benguela"
+          [ngModel]="searchQuery"
+          (ngModelChange)="onSearchChange($event)"
+          [placeholder]="i18n.t('favorites.search_placeholder')"
           autocomplete="off"
           [disabled]="adding"
+          autofocus
         />
+        <span
+          class="material-symbols-outlined spinner"
+          *ngIf="searching"
+          style="
+            font-size: 18px;
+            color: var(--on-surface-variant);
+            animation: spin 1s linear infinite;
+          "
+          >progress_activity</span
+        >
       </div>
 
-      <div class="field-group">
-        <label class="text-label text-muted">
-          {{ i18n.t("backoffice.field_country") }} *
-        </label>
-        <input
-          class="input-glass"
-          type="text"
-          [(ngModel)]="newCity.country"
-          (ngModelChange)="addError = ''"
-          placeholder="Ex: Angola"
-          autocomplete="off"
-          [disabled]="adding"
-        />
+      <!-- Search results dropdown -->
+      <div
+        class="search-results"
+        *ngIf="searchResults.length > 0 && !pendingLocation"
+      >
+        <button
+          class="search-result-item"
+          type="button"
+          *ngFor="let r of searchResults"
+          (click)="selectLocation(r)"
+        >
+          <span
+            class="material-symbols-outlined"
+            style="font-size: 18px; color: var(--primary)"
+            >location_on</span
+          >
+          <div class="result-text">
+            <span style="font-weight: 600">{{ r.name }}</span>
+            <span class="text-muted text-body-sm">
+              {{ r.region ? r.region + ", " : "" }}{{ r.country }}
+            </span>
+          </div>
+        </button>
       </div>
 
-      <div class="coord-grid">
-        <div class="field-group">
-          <label class="text-label text-muted">
-            {{ i18n.t("backoffice.field_lat") }}
-          </label>
-          <input
-            class="input-glass"
-            type="number"
-            step="0.0001"
-            [(ngModel)]="newCity.lat"
-            placeholder="-12.578"
-            [disabled]="adding"
-          />
-        </div>
-        <div class="field-group">
-          <label class="text-label text-muted">
-            {{ i18n.t("backoffice.field_lon") }}
-          </label>
-          <input
-            class="input-glass"
-            type="number"
-            step="0.0001"
-            [(ngModel)]="newCity.lon"
-            placeholder="13.41"
-            [disabled]="adding"
-          />
-        </div>
-      </div>
+      <!-- No results -->
+      <p
+        class="text-body-sm text-muted"
+        style="margin-top: 8px; text-align: center"
+        *ngIf="
+          !searching &&
+          searchQuery.trim().length >= 2 &&
+          searchResults.length === 0 &&
+          !pendingLocation
+        "
+      >
+        {{ i18n.t("favorites.no_results") }}
+      </p>
 
-      <p class="form-error" *ngIf="addError">
-        <span class="material-symbols-outlined">error</span> {{ addError }}
+      <!-- Search error -->
+      <p class="form-error" *ngIf="searchError">
+        <span class="material-symbols-outlined">error</span> {{ searchError }}
       </p>
     </div>
 
-    <div class="modal-actions">
+    <!-- Selected location preview -->
+    <div
+      class="selected-location glass-card"
+      *ngIf="pendingLocation"
+      style="margin-top: 16px; padding: 16px"
+    >
+      <div style="display: flex; align-items: center; gap: 12px">
+        <span
+          class="material-symbols-outlined text-primary"
+          style="font-size: 32px"
+          >location_on</span
+        >
+        <div>
+          <p class="text-headline-md">{{ pendingLocation.name }}</p>
+          <p class="text-body-sm text-muted">
+            {{ pendingLocation.region ? pendingLocation.region + ", " : ""
+            }}{{ pendingLocation.country }}
+          </p>
+          <p class="text-label text-muted" style="margin-top: 4px">
+            {{ pendingLocation.lat | number: "1.2-2" }},
+            {{ pendingLocation.lon | number: "1.2-2" }}
+          </p>
+        </div>
+        <button
+          class="btn-icon"
+          (click)="pendingLocation = null; searchQuery = ''"
+          style="margin-left: auto"
+        >
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Add error -->
+    <p class="form-error" *ngIf="addError" style="margin-top: 12px">
+      <span class="material-symbols-outlined">error</span> {{ addError }}
+    </p>
+
+    <!-- Actions -->
+    <div class="modal-actions" style="margin-top: 20px">
       <button class="btn-glass" (click)="closeCityModal()" [disabled]="adding">
         {{ i18n.t("common.cancel") }}
       </button>
       <button
         class="btn-primary"
-        (click)="addCity()"
-        [disabled]="adding || !canSubmit()"
+        (click)="confirmAdd()"
+        [disabled]="!pendingLocation || adding"
       >
         <span
           *ngIf="adding"
-          class="material-symbols-outlined spin"
-          style="font-size: 18px"
+          class="material-symbols-outlined"
+          style="font-size: 18px; animation: spin 1s linear infinite"
           >progress_activity</span
         >
-        {{ adding ? i18n.t("common.loading") : i18n.t("backoffice.add_city") }}
+        {{
+          adding ? i18n.t("common.loading") : i18n.t("favorites.confirm_add")
+        }}
       </button>
     </div>
   </div>

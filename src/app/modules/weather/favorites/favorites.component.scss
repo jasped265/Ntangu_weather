@@ -10,6 +10,12 @@
   align-items: flex-end;
   flex-wrap: wrap;
   gap: 12px;
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
 }
 
 .add-panel {
@@ -143,7 +149,7 @@
   }
 }
 
-/* ===== New City Modal ===== */
+/* ===== Modal ===== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -164,6 +170,10 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  // FIX: impede que o modal cresça além da viewport e activa scroll interno
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
 }
 .modal-header {
   display: flex;
@@ -204,27 +214,94 @@
     font-size: 18px;
   }
 }
-.spin {
-  animation: spin 1s linear infinite;
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 4px;
+
+/* ===== Search field dentro do modal ===== */
+.modal-search {
+  // FIX: position relative para o dropdown ficar contido aqui
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    font-size: 20px;
+    color: var(--on-surface-variant);
+    pointer-events: none;
   }
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+
+  .search-input {
+    width: 100%;
+    padding-left: 44px;
+    padding-right: 36px; // espaço para o spinner
   }
-  to {
-    opacity: 1;
+
+  .spinner {
+    position: absolute;
+    right: 12px;
   }
 }
 
-/* ===== Panel header (toggle "todas as cidades") ===== */
+// FIX: dropdown contido dentro do modal, sem sair para fora
+.search-results {
+  position: absolute;
+  top: calc(100% + 4px); // logo abaixo do input
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--surface-container, #1a1c1e);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  // Máximo de ~4 resultados visíveis; scroll se houver mais
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  color: var(--on-surface);
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  &:hover {
+    background: rgba(190, 197, 228, 0.08);
+  }
+
+  .result-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+/* ===== Cidade selecionada (preview) ===== */
+.selected-location {
+  border-radius: 12px;
+  border: 1px solid var(--primary, #bec5e4);
+}
+
+/* ===== Panel header ===== */
 .panel-header {
   display: flex;
   align-items: flex-start;
@@ -248,5 +325,26 @@
   .material-symbols-outlined {
     font-size: 40px;
     color: var(--outline);
+  }
+}
+
+/* ===== Animações ===== */
+.spin {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

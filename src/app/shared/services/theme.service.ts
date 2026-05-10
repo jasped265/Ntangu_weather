@@ -330,6 +330,20 @@ export class I18nService {
       'favorites.countries': 'Países',
       'favorites.avgUv': 'Índice UV Médio',
 
+      'favorites.empty_title': 'Sem cidades favoritas',
+      'favorites.empty_sub': 'Pesquisa e adiciona a tua primeira cidade.',
+      'favorites.no_cities': 'Ainda não há cidades registadas.',
+      'favorites.modal_title': 'Adicionar Cidade',
+      'favorites.modal_sub':
+        'Pesquisa uma cidade e confirma para adicionar aos favoritos.',
+      'favorites.search_placeholder': 'Pesquisar cidade... (ex: Luanda)',
+      'favorites.no_results': 'Nenhuma cidade encontrada.',
+      'favorites.search_error': 'Erro ao pesquisar. Tenta novamente.',
+      'favorites.confirm_add': 'Adicionar aos Favoritos',
+      'favorites.already_fav': 'Esta cidade já está nos favoritos.',
+      'favorites.add_error': 'Não foi possível adicionar a cidade.',
+      'favorites.fav_error': 'Cidade criada mas não foi possível favoritar.',
+
       'days.mon': 'SEG',
       'days.tue': 'TER',
       'days.wed': 'QUA',
@@ -576,6 +590,20 @@ export class I18nService {
       'favorites.savedCities': 'Saved Cities',
       'favorites.countries': 'Countries',
       'favorites.avgUv': 'Average UV Index',
+
+      'favorites.empty_title': 'No favorite cities yet',
+      'favorites.empty_sub': 'Search and add your first city.',
+      'favorites.no_cities': 'No cities registered yet.',
+      'favorites.modal_title': 'Add City',
+      'favorites.modal_sub':
+        'Search a city and confirm to add it to your favorites.',
+      'favorites.search_placeholder': 'Search city... (e.g. Luanda)',
+      'favorites.no_results': 'No cities found.',
+      'favorites.search_error': 'Search error. Please try again.',
+      'favorites.confirm_add': 'Add to Favorites',
+      'favorites.already_fav': 'This city is already in your favorites.',
+      'favorites.add_error': 'Could not add the city.',
+      'favorites.fav_error': 'City created but could not be favorited.',
 
       'backoffice.export_ok': 'Exported successfully', // en
     },

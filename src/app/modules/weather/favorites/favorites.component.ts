@@ -1,12 +1,23 @@
 import { Component, ChangeDetectorRef, OnInit, OnDestroy } from '@angular/core';
-import { WeatherService } from '../../../shared/services/weather.service';
+import {
+  WeatherService,
+  LocationResult,
+} from '../../../shared/services/weather.service';
 import {
   I18nService,
   UnitsService,
 } from '../../../shared/services/theme.service';
 import { City, WeatherData } from '../../../shared/models/weather.model';
 import { forkJoin, of, Subject } from 'rxjs';
-import { catchError, map, takeUntil } from 'rxjs/operators';
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  switchMap,
+  takeUntil,
+} from 'rxjs/operators';
 
 @Component({
   selector: 'app-favorites',
@@ -14,19 +25,30 @@ import { catchError, map, takeUntil } from 'rxjs/operators';
   styleUrls: ['./favorites.component.scss'],
 })
 export class FavoritesComponent implements OnInit, OnDestroy {
+  // ── Favoritos do utilizador atual ─────────────────────────────────────────
   cities: City[] = [];
-  allCities: City[] = [];
   loading = true;
 
-  // Painel "todas as cidades" — visível por defeito ao entrar
-  showAdd = true;
+  // ── Painel "todas as cidades registadas" ──────────────────────────────────
+  allCities: City[] = [];
+  showAdd = false;
 
-  // Modal "Nova cidade"
+  // ── Modal de pesquisa / adicionar cidade ──────────────────────────────────
   showCityModal = false;
-  newCity = { name: '', country: '', lat: 0, lon: 0 };
+
+  // Pesquisa dentro do modal
+  searchQuery = '';
+  searchResults: LocationResult[] = [];
+  searching = false;
+  searchError = '';
+  private readonly search$ = new Subject<string>();
+
+  // Cidade selecionada nos resultados (aguarda confirmação)
+  pendingLocation: LocationResult | null = null;
   adding = false;
   addError = '';
 
+  // ── Dados meteorológicos por cidade ───────────────────────────────────────
   weatherByCity: Record<string, WeatherData> = {};
 
   private readonly destroy$ = new Subject<void>();
@@ -38,34 +60,101 @@ export class FavoritesComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
   ) {}
 
+  // ── Lifecycle ─────────────────────────────────────────────────────────────
+
   ngOnInit(): void {
+    // Re-render reativo quando língua ou unidade mudam
     this.i18n.lang$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.cdr.markForCheck());
+
     this.units.unit$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.cdr.markForCheck());
 
-    this.ws.getCities().subscribe((c: City[]) => {
-      this.allCities = c;
-      this.cities = c.filter((x: City) => x.isFavorite);
-      this.refreshWeather();
-    });
+    // Pesquisa com debounce dentro do modal
+    this.search$
+      .pipe(
+        map((q) => q.trim()),
+        debounceTime(300),
+        distinctUntilChanged(),
+        filter((q) => q.length >= 2),
+        switchMap((q) => {
+          this.searching = true;
+          this.searchError = '';
+          this.cdr.markForCheck();
+          return this.ws.searchLocations(q).pipe(
+            catchError(() => {
+              this.searchError = this.i18n.t('favorites.search_error');
+              return of([]);
+            }),
+          );
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe((results) => {
+        this.searchResults = results;
+        this.searching = false;
+        this.cdr.markForCheck();
+      });
+
+    // Carregar favoritos do utilizador autenticado
+    this.loadFavorites();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.search$.complete();
   }
+
+  // ── Carregar favoritos (por user via token) ───────────────────────────────
+
+  private loadFavorites(): void {
+    this.loading = true;
+
+    // getFavoriteCities() usa /favorites que o backend filtra por user_id do token
+    this.ws
+      .getFavoriteCities()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (cities) => {
+          this.cities = cities;
+          this.loading = false;
+          this.refreshWeather();
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.loading = false;
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  // Carrega todas as cidades do sistema (para o painel de toggle)
+  loadAllCities(): void {
+    if (this.allCities.length) {
+      this.showAdd = true;
+      return;
+    }
+    this.ws
+      .getCities()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((all) => {
+        this.allCities = all;
+        this.showAdd = true;
+        this.cdr.markForCheck();
+      });
+  }
+
+  // ── Dados meteorológicos ──────────────────────────────────────────────────
 
   refreshWeather(): void {
     if (!this.cities.length) {
       this.weatherByCity = {};
-      this.loading = false;
       return;
     }
 
-    this.loading = true;
     const requests = this.cities.map((c) =>
       this.ws.getCurrentWeather(c.name).pipe(
         catchError(() => of(null)),
@@ -76,10 +165,10 @@ export class FavoritesComponent implements OnInit, OnDestroy {
     forkJoin(requests).subscribe((rows) => {
       const next: Record<string, WeatherData> = {};
       for (const r of rows) {
-        if (r.value) next[r.key] = r.value;
+        if (r.value) next[r.key] = r.value as WeatherData;
       }
       this.weatherByCity = next;
-      this.loading = false;
+      this.cdr.markForCheck();
     });
   }
 
@@ -87,113 +176,212 @@ export class FavoritesComponent implements OnInit, OnDestroy {
     return this.weatherByCity[city] || null;
   }
 
-  /** Returns temperature already converted to the current unit */
   getTemp(city: string): string {
     const raw = this.getWeather(city)?.temperature;
     if (raw == null) return '--';
     return `${this.units.convert(raw)}${this.units.symbol}`;
   }
 
+  // ── Toggle favorito (remover) ─────────────────────────────────────────────
+
   toggleFavorite(city: City): void {
     const next = !city.isFavorite;
     this.ws.setFavorite(city.id, next).subscribe({
       next: () => {
-        city.isFavorite = next;
-        this.cities = this.allCities.filter((c: City) => c.isFavorite);
-        this.refreshWeather();
+        if (!next) {
+          // Removido dos favoritos
+          this.cities = this.cities.filter((c) => c.id !== city.id);
+        } else {
+          city.isFavorite = true;
+        }
+        // Sincronizar no painel "todas as cidades" se estiver aberto
+        const found = this.allCities.find((c) => c.id === city.id);
+        if (found) found.isFavorite = next;
+        this.cdr.markForCheck();
       },
       error: () => {},
     });
   }
 
-  canSubmit(): boolean {
-    return (
-      !!this.newCity.name.trim() &&
-      !!this.newCity.country.trim() &&
-      !this.adding
-    );
+  // Toggle a partir do painel "todas as cidades"
+  toggleFromAll(city: City): void {
+    const next = !city.isFavorite;
+    this.ws.setFavorite(city.id, next).subscribe({
+      next: () => {
+        city.isFavorite = next;
+        if (next) {
+          if (!this.cities.find((c) => c.id === city.id)) {
+            this.cities = [...this.cities, { ...city, isFavorite: true }];
+            this.refreshWeather();
+          }
+        } else {
+          this.cities = this.cities.filter((c) => c.id !== city.id);
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => {},
+    });
+  }
+
+  // ── Modal de pesquisa ─────────────────────────────────────────────────────
+
+  openCityModal(): void {
+    this.showCityModal = true;
+    this.searchQuery = '';
+    this.searchResults = [];
+    this.pendingLocation = null;
+    this.addError = '';
+    this.searchError = '';
   }
 
   closeCityModal(): void {
     if (this.adding) return;
     this.showCityModal = false;
+    this.searchQuery = '';
+    this.searchResults = [];
+    this.pendingLocation = null;
     this.addError = '';
-    this.newCity = { name: '', country: '', lat: 0, lon: 0 };
+    this.searchError = '';
   }
 
-  /** Criar uma cidade nova directamente desde Favoritos */
-  addCity(): void {
-    const name = this.newCity.name.trim();
-    const country = this.newCity.country.trim();
-
-    if (!name || !country) {
-      this.addError = 'Preencha o nome da cidade e o país.';
+  onSearchChange(value: string): void {
+    this.searchQuery = value;
+    this.pendingLocation = null;
+    this.addError = '';
+    if (!value || value.trim().length < 2) {
+      this.searchResults = [];
       return;
     }
+    this.search$.next(value);
+  }
 
-    const duplicate = this.allCities.some(
-      (c) =>
-        c.name.toLowerCase() === name.toLowerCase() &&
-        c.country.toLowerCase() === country.toLowerCase(),
+  selectLocation(loc: LocationResult): void {
+    this.pendingLocation = loc;
+    this.searchQuery = `${loc.name}${loc.region ? ', ' + loc.region : ''}, ${loc.country}`;
+    this.searchResults = [];
+    this.addError = '';
+  }
+
+  // ── Adicionar cidade via pesquisa ─────────────────────────────────────────
+
+  confirmAdd(): void {
+    if (!this.pendingLocation || this.adding) return;
+
+    const loc = this.pendingLocation;
+
+    // Verificar se a cidade já está nos favoritos do user
+    const alreadyFav = this.cities.some(
+      (c) => c.name.toLowerCase() === loc.name.toLowerCase(),
     );
-    if (duplicate) {
-      this.addError = 'Essa cidade já está registada.';
+    if (alreadyFav) {
+      this.addError = this.i18n.t('favorites.already_fav');
       return;
     }
 
     this.adding = true;
     this.addError = '';
 
-    const payload = { ...this.newCity, name, country };
-
+    // Fluxo:
+    // 1. Tenta encontrar a cidade no sistema (/cities)
+    // 2a. Se existir → setFavorite(id, true)
+    // 2b. Se não existir → addCity() → setFavorite(id, true)
     this.ws
-      .addCity(payload)
+      .getCities()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (c: City) => {
-          const created: City = { ...c, isFavorite: true };
-          this.allCities = [...this.allCities, created];
+        next: (all) => {
+          const existing = all.find(
+            (c) => c.name.toLowerCase() === loc.name.toLowerCase(),
+          );
 
-          const finish = () => {
-            this.cities = this.allCities.filter((x) => x.isFavorite);
-            this.refreshWeather();
-            this.adding = false;
-            this.showCityModal = false;
-            this.newCity = { name: '', country: '', lat: 0, lon: 0 };
-            this.cdr.markForCheck();
-          };
-
-          if (!c.isFavorite) {
-            this.ws.setFavorite(c.id, true).subscribe({
-              next: finish,
+          if (existing) {
+            // Cidade já existe no sistema — só marcar como favorita
+            this.ws.setFavorite(existing.id, true).subscribe({
+              next: () => {
+                existing.isFavorite = true;
+                if (!this.cities.find((c) => c.id === existing.id)) {
+                  this.cities = [...this.cities, existing];
+                }
+                this.adding = false;
+                this.showCityModal = false;
+                this.pendingLocation = null;
+                this.refreshWeather();
+                this.cdr.markForCheck();
+              },
               error: () => {
                 this.adding = false;
-                this.addError =
-                  'Cidade criada, mas não foi possível marcar como favorita.';
+                this.addError = this.i18n.t('favorites.add_error');
+                this.cdr.markForCheck();
               },
             });
           } else {
-            finish();
+            // Cidade nova — criar e depois favoritar
+            this.ws
+              .addCity({
+                name: loc.name,
+                country: loc.country,
+                lat: loc.lat,
+                lon: loc.lon,
+              })
+              .pipe(takeUntil(this.destroy$))
+              .subscribe({
+                next: (created) => {
+                  this.ws.setFavorite(created.id, true).subscribe({
+                    next: () => {
+                      const withFav: City = { ...created, isFavorite: true };
+                      this.cities = [...this.cities, withFav];
+                      this.adding = false;
+                      this.showCityModal = false;
+                      this.pendingLocation = null;
+                      this.refreshWeather();
+                      this.cdr.markForCheck();
+                    },
+                    error: () => {
+                      // Cidade criada mas não foi possível favoritar
+                      this.adding = false;
+                      this.addError = this.i18n.t('favorites.fav_error');
+                      this.cdr.markForCheck();
+                    },
+                  });
+                },
+                error: () => {
+                  this.adding = false;
+                  this.addError = this.i18n.t('favorites.add_error');
+                  this.cdr.markForCheck();
+                },
+              });
           }
         },
         error: () => {
           this.adding = false;
-          this.addError = 'Não foi possível criar a cidade. Tente novamente.';
+          this.addError = this.i18n.t('favorites.add_error');
+          this.cdr.markForCheck();
         },
       });
   }
 
+  // ── Insights ──────────────────────────────────────────────────────────────
+
   get avgTemp(): string {
-    if (!this.cities.length) return '0';
+    if (!this.cities.length) return '—';
     const temps = this.cities
-      .map((c: City) => this.getWeather(c.name)?.temperature)
+      .map((c) => this.getWeather(c.name)?.temperature)
       .filter((x): x is number => typeof x === 'number');
-    if (!temps.length) return '0';
+    if (!temps.length) return '—';
     const avg = Math.round(temps.reduce((a, b) => a + b, 0) / temps.length);
     return `${this.units.convert(avg)}${this.units.symbol}`;
   }
 
   get uniqueCountryCount(): number {
-    return new Set(this.cities.map((c: City) => c.country)).size;
+    return new Set(this.cities.map((c) => c.country)).size;
+  }
+
+  get avgUv(): string {
+    if (!this.cities.length) return '—';
+    const uvs = this.cities
+      .map((c) => this.getWeather(c.name)?.uvIndex)
+      .filter((x): x is number => typeof x === 'number' && x > 0);
+    if (!uvs.length) return '—';
+    return String(Math.round(uvs.reduce((a, b) => a + b, 0) / uvs.length));
   }
 }

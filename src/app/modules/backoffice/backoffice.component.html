@@ -186,8 +186,27 @@
           <span class="material-symbols-outlined">add_location</span>
           {{ i18n.t("backoffice.new_city") }}
         </button>
-        <button class="btn-glass">
-          <span class="material-symbols-outlined">download</span>
+        <button
+          class="btn-glass"
+          (click)="exportCSV()"
+          [disabled]="exportingCSV"
+          [title]="i18n.t('reports.download_csv')"
+        >
+          <span class="material-symbols-outlined">
+            {{ exportingCSV ? "hourglass_empty" : "table_view" }}
+          </span>
+          CSV
+        </button>
+        <button
+          class="btn-glass"
+          (click)="exportPDF()"
+          [disabled]="exportingPDF"
+          [title]="i18n.t('reports.download_pdf')"
+        >
+          <span class="material-symbols-outlined">
+            {{ exportingPDF ? "hourglass_empty" : "picture_as_pdf" }}
+          </span>
+          PDF
         </button>
       </div>
     </div>
@@ -355,4 +374,16 @@
       </button>
     </div>
   </div>
+</div>
+
+<!-- Toast notification -->
+<div
+  class="toast"
+  [class.visible]="toast.show"
+  [class.toast-error]="toast.error"
+>
+  <span class="material-symbols-outlined" style="font-size: 18px">
+    {{ toast.error ? "error" : "check_circle" }}
+  </span>
+  {{ toast.message }}
 </div>
